@@ -7,28 +7,30 @@
 
 import SwiftUI
 
+// MARK: - Main Login View
 struct LogInView: View {
-    // MARK: - Form Fields
-    @State private var email: String = ""
-    @State private var password: String = ""
 
-    // MARK: - UI State Management
-    @State private var isLoading: Bool = false
-    @State private var showAlert: Bool = false
-    @State private var alertMessage: String = ""
-    @State private var navigateToHome: Bool = false
+    // MARK: - User Input State Variables
+    @State private var email: String = ""           // Stores user's email input
+    @State private var password: String = ""        // Stores user's password input
+
+    // MARK: - UI Control State Variables
+    @State private var isLoading: Bool = false      // Indicates if a login is in progress (shows spinner)
+    @State private var showAlert: Bool = false      // Triggers the display of the alert
+    @State private var alertMessage: String = ""    // Stores alert message content
+    @State private var navigateToHome: Bool = false // Controls navigation to the Home screen after login
 
     // MARK: - Password Visibility Toggle
-    @State private var showPassword: Bool = false
+    @State private var showPassword: Bool = false   // Toggles password visibility in the password field
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // MARK: - Background Gradient
+                // MARK: - Background Gradient Setup
                 LinearGradient(gradient: Gradient(colors: [Color(hex: "63AD7A"), Color(hex: "193125")]),
                                startPoint: .topLeading,
                                endPoint: .bottomTrailing)
-                    .ignoresSafeArea()
+                    .ignoresSafeArea() // Extends background across screen edges
 
                 VStack(spacing: 20) {
                     // MARK: - Branding Section
@@ -46,20 +48,20 @@ struct LogInView: View {
                     }
                     .padding(.bottom, 10)
 
-                    // MARK: - Form Section
+                    // MARK: - Form Header & Fields
                     Section(header:
                         Text("Enter Details")
                             .font(.custom("Avenir", size: 18))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .foregroundColor(.white)
                     ) {
-                        inputField("Email", text: $email, isEmail: true)
-                        secureInputField("Password", text: $password, isVisible: $showPassword)
+                        inputField("Email", text: $email, isEmail: true)                  // Email input field
+                        secureInputField("Password", text: $password, isVisible: $showPassword) // Password input with visibility toggle
                     }
 
                     // MARK: - Log In Button or Loading Indicator
                     if isLoading {
-                        ProgressView().padding()
+                        ProgressView().padding() // Show loading spinner when login is in progress
                     } else {
                         Button(action: logIn) {
                             Text("Log In")
@@ -71,55 +73,59 @@ struct LogInView: View {
                         .padding(.top, 10)
                     }
 
-                    // MARK: - Navigation to Sign Up
+                    // MARK: - Navigation Link to Sign Up Screen
                     NavigationLink(destination: SignUpView()) {
                         Text("Don't have an account? Sign Up")
                             .foregroundColor(.white)
                     }
 
-                    // MARK: - Navigation to Home (post login)
+                    // MARK: - Navigation to Home on Successful Login
                     .navigationDestination(isPresented: $navigateToHome) {
                         HomeView()
                     }
                 }
                 .padding()
                 .alert(isPresented: $showAlert) {
-                    Alert(title: Text("Log In"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+                    Alert(
+                        title: Text("Log In"),
+                        message: Text(alertMessage),
+                        dismissButton: .default(Text("OK"))
+                    )
                 }
             }
         }
     }
 
-    // MARK: - Custom Input Fields
-
-    /// A generic text field for email input.
+    // MARK: - Custom Email Input Field Generator
+    /// Creates a styled input field for text or email input
     private func inputField(_ title: String, text: Binding<String>, isEmail: Bool = false) -> some View {
         TextField(title, text: text)
             .padding(.horizontal, 10)
             .frame(height: 55)
-            .background(Color(.systemGray6))
+            .background(Color(.systemGray6)) // Light gray background
             .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1)) // Gray border
             .autocapitalization(isEmail ? .none : .words)
             .keyboardType(isEmail ? .emailAddress : .default)
             .disableAutocorrection(true)
     }
 
-    /// A secure field with toggleable visibility for password input.
+    // MARK: - Custom Password Input Field with Visibility Toggle
+    /// Creates a password input field with an "eye" button to toggle visibility
     private func secureInputField(_ title: String, text: Binding<String>, isVisible: Binding<Bool>) -> some View {
         HStack {
             Group {
                 if isVisible.wrappedValue {
-                    TextField(title, text: text)
+                    TextField(title, text: text) // Show password as plain text
                 } else {
-                    SecureField(title, text: text)
+                    SecureField(title, text: text) // Obscure password
                 }
             }
             .padding(.horizontal, 10)
             .frame(height: 55)
 
             Button(action: {
-                isVisible.wrappedValue.toggle()
+                isVisible.wrappedValue.toggle() // Toggle password visibility
             }) {
                 Image(systemName: isVisible.wrappedValue ? "eye.slash" : "eye")
                     .foregroundColor(.gray)
@@ -131,29 +137,30 @@ struct LogInView: View {
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
     }
 
-    // MARK: - Log In Logic
-
-    /// Handles the login action with basic validation and simulated async delay.
+    // MARK: - Login Action Handler
+    /// Validates form, simulates login delay, and shows alert
     private func logIn() {
         do {
-            try validateForm()
-            isLoading = true
+            try validateForm() // Validate user input
+            isLoading = true   // Show loading indicator
 
-            // Simulate network delay
+            // Simulated network delay (e.g. API call)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 isLoading = false
                 alertMessage = "Welcome back to CookCraft!"
                 showAlert = true
-                navigateToHome = true
+                navigateToHome = true // Navigate to home on success
             }
         } catch {
-            alertMessage = error.localizedDescription
+            alertMessage = error.localizedDescription // Show error alert
             showAlert = true
         }
     }
 
-    /// Validates login input fields using regex and logic.
+    // MARK: - Input Validation Logic
+    /// Checks email format and non-empty password
     private func validateForm() throws {
+        // Regular expression for email validation
         let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
 
@@ -167,8 +174,7 @@ struct LogInView: View {
     }
 }
 
-// MARK: - Login Validation Errors
-
+// MARK: - Custom Error Enum for Login Validation
 enum LogInError: Error, LocalizedError {
     case invalidEmail
     case invalidPassword
@@ -183,12 +189,12 @@ enum LogInError: Error, LocalizedError {
     }
 }
 
-// MARK: - Hex Color Extension
-
+// MARK: - Extension for Hex Color Initialization
 extension Color {
+    /// Initializes a SwiftUI Color using a hex string (e.g., "63AD7A")
     init(hexString: String) {
         let scanner = Scanner(string: hexString)
-        _ = scanner.scanString("#")
+        _ = scanner.scanString("#") // Skip '#' if present
         var rgb: UInt64 = 0
         scanner.scanHexInt64(&rgb)
 
@@ -200,9 +206,7 @@ extension Color {
     }
 }
 
-
-// MARK: - Preview
-
+// MARK: - Preview Provider
 #Preview {
     LogInView()
 }
