@@ -1,120 +1,67 @@
 import SwiftUI
+import FirebaseAuth
+
+
 
 struct HomeView: View {
+    // MARK: – State
     @State private var searchText = ""
     @State private var mealSuggestions: [String] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
-    
+    @State private var userName: String = "Guest"
+
     // Meal filtering options
-    @State private var selectedDietaryFilter: String = "None"  // Default filter: No filter
+    @State private var selectedDietaryFilter: String = "None"
     private let dietaryFilters = ["None", "Vegetarian", "Gluten-Free", "Vegan", "Dairy-Free"]
-    
+
     // Example data
-    let categories = [
+    private let categories = [
         ("Breakfast Ideas", "sun.max.fill"),
         ("Snack Ideas", "apple.logo"),
         ("Lunch Meals", "leaf.fill"),
         ("Dinner Recipes", "fork.knife")
     ]
-    
-    let articles = [
+    private let articles = [
         ("Zinc Sources", "lightbulb.fill"),
         ("Vitamin A Sources", "cross.case.fill"),
         ("Healthy Eating Tips", "app.badge.checkmark")
     ]
-    
-    // Computed property for dynamic greeting and meal type
-    var greeting: String {
+
+    // MARK: – Computed Properties
+    private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12: return "Good Morning"
-        case 12..<17: return "Good Afternoon"
-        default: return "Good Evening"
+        case 5..<12:   return "Good Morning"
+        case 12..<17:  return "Good Afternoon"
+        default:       return "Good Evening"
         }
     }
-    
-    var mealType: String {
+    private var mealType: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12: return "breakfast"
-        case 12..<17: return "lunch"
-        default: return "dinner"
+        case 5..<12:   return "breakfast"
+        case 12..<17:  return "lunch"
+        default:       return "dinner"
         }
     }
 
-    // Function to fetch meal ideas based on search query and selected dietary filter
-    func fetchMealIdeas(query: String) {
-        guard !query.isEmpty else { return }
-
-        isLoading = true
-        errorMessage = nil
-        
-        // Construct the API URL with filters
-        let apiKey = "YOUR_API_KEY"  // Replace with your actual API key (e.g., Spoonacular, Edamam, etc.)
-        let baseURL = "https://api.spoonacular.com/recipes/complexSearch"  // Replace with your meal API URL
-        var urlString = "\(baseURL)?query=\(query)&mealType=\(mealType)&apiKey=\(apiKey)"
-        
-        // Add dietary filter to the request if selected
-        if selectedDietaryFilter != "None" {
-            urlString += "&diet=\(selectedDietaryFilter.lowercased())"
-        }
-        
-        guard let url = URL(string: urlString) else {
-            errorMessage = "Invalid URL."
-            isLoading = false
-            return
-        }
-
-        // Perform the network request
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    self.errorMessage = "Network error: \(error.localizedDescription)"
-                    self.isLoading = false
-                    return
-                }
-
-                guard let data = data else {
-                    self.errorMessage = "No data received."
-                    self.isLoading = false
-                    return
-                }
-
-                do {
-                    // Parse the response JSON
-                    if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                       let results = jsonResponse["results"] as? [[String: Any]] {
-                        self.mealSuggestions = results.compactMap { result in
-                            return result["title"] as? String
-                        }
-                    } else {
-                        self.errorMessage = "Unable to parse meal suggestions."
-                    }
-                } catch {
-                    self.errorMessage = "Error parsing data."
-                }
-
-                self.isLoading = false
-            }
-        }.resume()
-    }
-
+    // MARK: – Body
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    
-                    // Greeting
+                    // Greeting + User Name
                     VStack(alignment: .leading, spacing: 5) {
-                        Text(greeting)
+                        Text("\(greeting),")
                             .font(.title2)
                             .foregroundColor(.white)
-                        Text("Jane Doe")
+                        Text(userName)
                             .font(.title)
                             .bold()
                             .foregroundColor(.white)
                     }
+                    .onAppear(perform: fetchUserName)
 
                     // Search Bar
                     HStack {
@@ -122,9 +69,7 @@ struct HomeView: View {
                             .foregroundColor(.gray)
                         TextField("Search for meal ideas...", text: $searchText)
                             .foregroundColor(.black)
-                            .onSubmit {
-                                fetchMealIdeas(query: searchText)  // Call function on submit
-                            }
+                            .onSubmit { fetchMealIdeas(query: searchText) }
                     }
                     .padding(.horizontal)
                     .frame(height: 50)
@@ -148,20 +93,19 @@ struct HomeView: View {
                             .progressViewStyle(CircularProgressViewStyle())
                             .padding()
                     }
-                    
+
                     // Error Message
-                    if let errorMessage = errorMessage {
-                        Text(errorMessage)
+                    if let error = errorMessage {
+                        Text(error)
                             .foregroundColor(.red)
                             .padding()
                     }
 
-                    // Display Meal Suggestions
+                    // Meal Suggestions List
                     if !mealSuggestions.isEmpty {
                         Text("Meal Suggestions:")
                             .font(.headline)
                             .foregroundColor(.white)
-                        
                         ForEach(mealSuggestions, id: \.self) { meal in
                             Text(meal)
                                 .padding(.vertical, 5)
@@ -172,23 +116,19 @@ struct HomeView: View {
                         }
                     }
 
-                    // Categories Section as Horizontal Scrolling Cards with Icons and Gradients for Icons
+                    // Categories Section
                     Text("Categories")
                         .font(.headline)
                         .foregroundColor(.white)
-                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(categories, id: \.0) { category, icon in
                                 VStack {
-                                    // Card for each category
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 15)
                                             .fill(Color.white.opacity(0.1))
                                             .frame(width: 200, height: 180)
-                                        
                                         VStack {
-                                            // Icon with gradient background
                                             ZStack {
                                                 LinearGradient(
                                                     gradient: Gradient(colors: [Color.blue, Color.purple]),
@@ -197,7 +137,6 @@ struct HomeView: View {
                                                 )
                                                 .clipShape(Circle())
                                                 .frame(width: 50, height: 50)
-                                                
                                                 Image(systemName: icon)
                                                     .resizable()
                                                     .scaledToFit()
@@ -219,23 +158,19 @@ struct HomeView: View {
                         .padding(.horizontal)
                     }
 
-                    // Educational Articles Section as Horizontal Scrolling Cards with Icons and Gradients for Icons
+                    // Educational Articles Section
                     Text("Educational Articles")
                         .font(.headline)
                         .foregroundColor(.white)
-                    
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 15) {
                             ForEach(articles, id: \.0) { article, icon in
                                 VStack {
-                                    // Card for each article
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 15)
                                             .fill(Color.white.opacity(0.1))
                                             .frame(width: 200, height: 210)
-                                        
                                         VStack {
-                                            // Icon with gradient background
                                             ZStack {
                                                 LinearGradient(
                                                     gradient: Gradient(colors: [Color.green, Color.yellow]),
@@ -244,7 +179,6 @@ struct HomeView: View {
                                                 )
                                                 .clipShape(Circle())
                                                 .frame(width: 50, height: 50)
-                                                
                                                 Image(systemName: icon)
                                                     .resizable()
                                                     .scaledToFit()
@@ -282,10 +216,84 @@ struct HomeView: View {
         }
         .navigationBarHidden(true)
     }
+
+    // MARK: – Methods
+
+    /// Fetches FirebaseAuth.currentUser and resolves a display name or fallback.
+    private func fetchUserName() {
+        guard let user = Auth.auth().currentUser else {
+            userName = "Guest"
+            return
+        }
+
+        if let fullName = user.displayName,
+           !fullName.trimmingCharacters(in: .whitespaces).isEmpty {
+            userName = fullName
+        }
+        else if let email = user.email,
+                let localPart = email.components(separatedBy: "@").first,
+                !localPart.isEmpty {
+            userName = localPart
+                .replacingOccurrences(of: ".", with: " ")
+                .split(separator: " ")
+                .map { $0.capitalized }
+                .joined(separator: " ")
+        }
+        else {
+            userName = "User"
+            errorMessage = "Unable to fetch full name."
+        }
+    }
+
+    /// Fetches meal ideas from the external API.
+    private func fetchMealIdeas(query: String) {
+        guard !query.isEmpty else { return }
+        isLoading = true
+        errorMessage = nil
+
+        let apiKey = "YOUR_API_KEY"
+        let baseURL = "https://api.spoonacular.com/recipes/complexSearch"
+        var urlString = "\(baseURL)?query=\(query)&mealType=\(mealType)&apiKey=\(apiKey)"
+
+        if selectedDietaryFilter != "None" {
+            urlString += "&diet=\(selectedDietaryFilter.lowercased())"
+        }
+
+        guard let url = URL(string: urlString) else {
+            errorMessage = "Invalid URL."
+            isLoading = false
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            DispatchQueue.main.async {
+                defer { isLoading = false }
+                if let error = error {
+                    errorMessage = "Network error: \(error.localizedDescription)"
+                    return
+                }
+                guard let data = data else {
+                    errorMessage = "No data received."
+                    return
+                }
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let results = json["results"] as? [[String: Any]] {
+                        mealSuggestions = results.compactMap { $0["title"] as? String }
+                    } else {
+                        errorMessage = "Unable to parse meal suggestions."
+                    }
+                } catch {
+                    errorMessage = "Error parsing data."
+                }
+            }
+        }
+        .resume()
+    }
 }
 
-
-
-#Preview {
-    HomeView()
+struct HomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        HomeView()
+    }
 }

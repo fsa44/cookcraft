@@ -3,44 +3,47 @@
 //  Cookcraft
 //
 //  Created by Fatmasarah Abdikadir on 04/06/2025.
+//  Updated by ChatGPT on 02/07/2025.
 //
 
 import SwiftUI
+import FirebaseAuth
 
 // MARK: - Main Login View
 struct LogInView: View {
 
     // MARK: - User Input State Variables
-    @State private var email: String = ""           // Stores user's email input
-    @State private var password: String = ""        // Stores user's password input
+    @State private var email: String = ""
+    @State private var password: String = ""
 
     // MARK: - UI Control State Variables
-    @State private var isLoading: Bool = false      // Indicates if a login is in progress (shows spinner)
-    @State private var showAlert: Bool = false      // Triggers the display of the alert
-    @State private var alertMessage: String = ""    // Stores alert message content
-    @State private var navigateToHome: Bool = false // Controls navigation to the Home screen after login
+    @State private var isLoading: Bool = false
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
+    @State private var navigateToHome: Bool = false
 
     // MARK: - Password Visibility Toggle
-    @State private var showPassword: Bool = false   // Toggles password visibility in the password field
+    @State private var showPassword: Bool = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // MARK: - Background Gradient Setup
-                LinearGradient(gradient: Gradient(colors: [Color(hex: "63AD7A"), Color(hex: "193125")]),
-                               startPoint: .topLeading,
-                               endPoint: .bottomTrailing)
-                    .ignoresSafeArea() // Extends background across screen edges
+                // Background Gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [Color(hex: "63AD7A"), Color(hex: "193125")]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
                 VStack(spacing: 20) {
-                    // MARK: - Branding Section
+                    // Branding
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Log In")
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
-
                         Text("Cookcraft.")
                             .font(.custom("Avenir", size: 67))
                             .fontWeight(.bold)
@@ -48,20 +51,20 @@ struct LogInView: View {
                     }
                     .padding(.bottom, 10)
 
-                    // MARK: - Form Header & Fields
-                    Section(header:
-                        Text("Enter Details")
-                            .font(.custom("Avenir", size: 18))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundColor(.white)
+                    // Form
+                    Section(header: Text("Enter Details")
+                                .font(.custom("Avenir", size: 18))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundColor(.white)
                     ) {
-                        inputField("Email", text: $email, isEmail: true)                  // Email input field
-                        secureInputField("Password", text: $password, isVisible: $showPassword) // Password input with visibility toggle
+                        inputField("Email", text: $email, isEmail: true)
+                        secureInputField("Password", text: $password, isVisible: $showPassword)
                     }
 
-                    // MARK: - Log In Button or Loading Indicator
+                    // Log In Button / Spinner
                     if isLoading {
-                        ProgressView().padding() // Show loading spinner when login is in progress
+                        ProgressView()
+                            .padding()
                     } else {
                         Button(action: logIn) {
                             Text("Log In")
@@ -73,13 +76,11 @@ struct LogInView: View {
                         .padding(.top, 10)
                     }
 
-                    // MARK: - Navigation Link to Sign Up Screen
+                    // Sign Up Link
                     NavigationLink(destination: SignUpView()) {
                         Text("Don't have an account? Sign Up")
                             .foregroundColor(.white)
                     }
-
-                    // MARK: - Navigation to Home on Successful Login
                     .navigationDestination(isPresented: $navigateToHome) {
                         HomeView()
                     }
@@ -87,7 +88,7 @@ struct LogInView: View {
                 .padding()
                 .alert(isPresented: $showAlert) {
                     Alert(
-                        title: Text("Log In"),
+                        title: Text("Log In Error"),
                         message: Text(alertMessage),
                         dismissButton: .default(Text("OK"))
                     )
@@ -96,37 +97,94 @@ struct LogInView: View {
         }
     }
 
-    // MARK: - Custom Email Input Field Generator
-    /// Creates a styled input field for text or email input
+    // MARK: - Login Action Handler
+    private func logIn() {
+        do {
+            try validateForm()
+            isLoading = true
+
+            Auth.auth().signIn(withEmail: email, password: password) { result, error in
+                DispatchQueue.main.async {
+                    isLoading = false
+
+                    if let error = error as NSError? {
+                        // Handle specific Firebase Auth errors if needed
+                        alertMessage = firebaseErrorMessage(from: error)
+                        showAlert = true
+                    } else {
+                        // Successful login
+                        navigateToHome = true
+                    }
+                }
+            }
+        } catch {
+            alertMessage = error.localizedDescription
+            showAlert = true
+        }
+    }
+
+    // MARK: - Input Validation Logic
+    private func validateForm() throws {
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        guard emailPredicate.evaluate(with: email) else {
+            throw LogInError.invalidEmail
+        }
+        guard !password.isEmpty else {
+            throw LogInError.invalidPassword
+        }
+    }
+
+    // MARK: - Map Firebase Errors to User-Friendly Messages
+    private func firebaseErrorMessage(from error: NSError) -> String {
+        guard let code = AuthErrorCode(rawValue: error.code) else {
+            return error.localizedDescription
+        }
+        switch code {
+        case .invalidEmail:
+            return "The email address is badly formatted."
+        case .userDisabled:
+            return "This account has been disabled. Please contact support."
+        case .wrongPassword:
+            return "The password is incorrect. Please try again."
+        case .userNotFound:
+            return "No account found with this email."
+        case .networkError:
+            return "Network error. Please check your internet connection and try again."
+        default:
+            return error.localizedDescription
+        }
+    }
+
+    // MARK: - Custom Email Input Field
     private func inputField(_ title: String, text: Binding<String>, isEmail: Bool = false) -> some View {
         TextField(title, text: text)
             .padding(.horizontal, 10)
             .frame(height: 55)
-            .background(Color(.systemGray6)) // Light gray background
+            .background(Color(.systemGray6))
             .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1)) // Gray border
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
             .autocapitalization(isEmail ? .none : .words)
             .keyboardType(isEmail ? .emailAddress : .default)
             .disableAutocorrection(true)
     }
 
-    // MARK: - Custom Password Input Field with Visibility Toggle
-    /// Creates a password input field with an "eye" button to toggle visibility
+    // MARK: - Custom Password Input Field
     private func secureInputField(_ title: String, text: Binding<String>, isVisible: Binding<Bool>) -> some View {
         HStack {
             Group {
                 if isVisible.wrappedValue {
-                    TextField(title, text: text) // Show password as plain text
+                    TextField(title, text: text)
                 } else {
-                    SecureField(title, text: text) // Obscure password
+                    SecureField(title, text: text)
                 }
             }
             .padding(.horizontal, 10)
             .frame(height: 55)
 
-            Button(action: {
-                isVisible.wrappedValue.toggle() // Toggle password visibility
-            }) {
+            Button {
+                isVisible.wrappedValue.toggle()
+            } label: {
                 Image(systemName: isVisible.wrappedValue ? "eye.slash" : "eye")
                     .foregroundColor(.gray)
             }
@@ -135,42 +193,6 @@ struct LogInView: View {
         .background(Color(.systemGray6))
         .cornerRadius(10)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
-    }
-
-    // MARK: - Login Action Handler
-    /// Validates form, simulates login delay, and shows alert
-    private func logIn() {
-        do {
-            try validateForm() // Validate user input
-            isLoading = true   // Show loading indicator
-
-            // Simulated network delay (e.g. API call)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                isLoading = false
-                alertMessage = "Welcome back to CookCraft!"
-                showAlert = true
-                navigateToHome = true // Navigate to home on success
-            }
-        } catch {
-            alertMessage = error.localizedDescription // Show error alert
-            showAlert = true
-        }
-    }
-
-    // MARK: - Input Validation Logic
-    /// Checks email format and non-empty password
-    private func validateForm() throws {
-        // Regular expression for email validation
-        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-
-        guard emailPredicate.evaluate(with: email) else {
-            throw LogInError.invalidEmail
-        }
-
-        guard !password.isEmpty else {
-            throw LogInError.invalidPassword
-        }
     }
 }
 
@@ -205,6 +227,7 @@ extension Color {
         self.init(red: r, green: g, blue: b)
     }
 }
+
 
 // MARK: - Preview Provider
 #Preview {

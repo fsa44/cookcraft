@@ -4,63 +4,75 @@
 //
 //  Created by Fatmasarah Abdikadir on 25/06/2025.
 //
-
+// MARK: – Controller
 import Foundation
-//import FirebaseAuth
-//import FirebaseFirestore
+import FirebaseAuth
+import FirebaseFirestore
 import Combine
 
-class UserProfileController:ObservableObject{
-    @Published var fullName: String = "Guest"
-    @Published var initials: String = "G"
+// MARK: – Controller
+/// Fetches the signed-in user’s Firestore profile (firstName, lastName, email)
+class UserProfileController: ObservableObject {
+    @Published var fullName: String = "User"
+    @Published var initials: String = "U"
     @Published var email: String = "No email"
     @Published var isLoading: Bool = false
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-//    init() {
-//        // Observe authentication state changes
-//        Auth.auth().addStateDidChangeListener { [weak self] (auth, user) in
-//            if let user = user {
-//                self?.fetchUserProfile(userId: user.uid)
-//            } else {
-//                self?.fullName = "Guest"
-//                self?.initials = "G"
-//                self?.email = "No email"
-//            }
-//        }
-//    }
-    // Fetch user profile data from Firestore
-//    private func fetchUserProfile(userId: String) {
-//        isLoading = true
-//        let db = Firestore.firestore()
-//        db.collection("users").document(userId).getDocument { [weak self] (document, error) in
-//            self?.isLoading = false
-//            if let document = document, document.exists {
-//                let data = document.data()
-//                let firstName = data?["firstName"] as? String ?? ""
-//                let lastName = data?["lastName"] as? String ?? ""
-//                let email = data?["email"] as? String ?? "No email"
-//                
-//                self?.fullName = "\(firstName) \(lastName)"
-//                self?.initials = self?.getInitials(firstName: firstName, lastName: lastName) ?? "G"
-//                self?.email = email
-//                
-//            } else {
-//                self?.fullName = "Guest"
-//                self?.initials = "G"
-//                self?.email = "No email"
-//            }
-//        }
-//    }
-    
-    // Get initials from first and last name
-    private func getInitials(firstName: String, lastName: String) -> String {
-        let firstInitial = firstName.first.map(String.init) ?? ""
-        let lastInitial = lastName.first.map(String.init) ?? ""
-        return "\(firstInitial)\(lastInitial)".uppercased()
-    }
-    
+    @Published var errorMessage: String?     // nil means “no error”
 
-    
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        // Listen for auth changes
+        Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+            if let user = user {
+                self?.fetchUserProfile(userId: user.uid)
+            } else {
+                self?.resetToGuest()
+            }
+        }
+    }
+
+    private func fetchUserProfile(userId: String) {
+        isLoading = true
+        let db = Firestore.firestore()
+        db.collection("users").document(userId)
+          .getDocument { [weak self] snapshot, error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+
+                if let error = error {
+                    self?.errorMessage = "Failed to load profile: \(error.localizedDescription)"
+                    self?.resetToGuest()
+                    return
+                }
+
+                guard
+                  let data = snapshot?.data(),
+                  let first = data["firstName"] as? String,
+                  let last  = data["lastName"]  as? String,
+                  let mail  = data["email"]     as? String
+                else {
+                    self?.errorMessage = "Profile is incomplete."
+                    self?.resetToGuest()
+                    return
+                }
+
+                self?.fullName = "\(first) \(last)"
+                self?.initials = Self.makeInitials(firstName: first, lastName: last)
+                self?.email    = mail
+            }
+        }
+    }
+
+    private func resetToGuest() {
+        fullName = "Guest"
+        initials = "G"
+        email    = "No email"
+    }
+
+    private static func makeInitials(firstName: String, lastName: String) -> String {
+        let fi = firstName.first.map(String.init) ?? ""
+        let li = lastName.first.map(String.init) ?? ""
+        return (fi + li).uppercased()
+    }
 }

@@ -3,42 +3,49 @@
 //  Cookcraft
 //
 //  Created by Fatmasarah Abdikadir on 04/06/2025.
+//  Updated by ChatGPT on 02/07/2025.
 //
 
 import SwiftUI
+import FirebaseAuth
 
 // MARK: - Main Sign Up View
 struct SignUpView: View {
 
-    // MARK: - User Input Fields
-    @State private var firstName: String = ""            // User's first name
-    @State private var lastName: String = ""             // User's last name
-    @State private var email: String = ""                // User's email
-    @State private var password: String = ""             // Password field
-    @State private var confirmPassword: String = ""      // Confirm password field
+    // MARK: - User Input Fields (Form Data)
+    // These @State properties hold user-entered values
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var confirmPassword: String = ""
 
-    // MARK: - UI State Management
-    @State private var isLoading: Bool = false           // Whether to show loading indicator
-    @State private var showAlert: Bool = false           // Toggle alert visibility
-    @State private var alertMessage: String = ""         // Message shown in alert
-    @State private var navigateToHome: Bool = false      // Controls navigation to home screen after signup
+    // MARK: - UI State Flags
+    // These control loading, alerts, and navigation state
+    @State private var isLoading: Bool = false
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
+    @State private var navigateToHome: Bool = false
 
     // MARK: - Password Visibility Toggles
-    @State private var showPassword: Bool = false        // Toggle password visibility
-    @State private var showConfirmPassword: Bool = false // Toggle confirm password visibility
+    // Used to toggle visibility for password text fields
+    @State private var showPassword: Bool = false
+    @State private var showConfirmPassword: Bool = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 // MARK: - Background Gradient
-                LinearGradient(gradient: Gradient(colors: [Color(hex: "1B3528"), Color(hex: "4F9B75")]),
-                               startPoint: .top,
-                               endPoint: .bottom)
-                    .ignoresSafeArea() // Extends gradient to entire screen
+                LinearGradient(
+                    gradient: Gradient(colors: [Color(hex: "1B3528"), Color(hex: "4F9B75")]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
                 VStack(spacing: 20) {
 
-                    // MARK: - Title / Branding
+                    // MARK: - Branding Text
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Sign Up")
                             .font(.title)
@@ -53,14 +60,13 @@ struct SignUpView: View {
                     }
                     .padding(.bottom, 10)
 
-                    // MARK: - Form Section
-                    Section(header:
-                        Text("Enter Details")
+                    // MARK: - Form Inputs
+                    Section(
+                        header: Text("Enter Details")
                             .font(.custom("Avenir", size: 18))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .foregroundColor(.white)
                     ) {
-                        // Input fields for user details
                         inputField("First Name", text: $firstName)
                         inputField("Last Name", text: $lastName)
                         inputField("Email", text: $email, isEmail: true)
@@ -68,7 +74,7 @@ struct SignUpView: View {
                         secureInputField("Confirm Password", text: $confirmPassword, isVisible: $showConfirmPassword)
                     }
 
-                    // MARK: - Sign Up Button / Progress Indicator
+                    // MARK: - Sign Up Button / Loading Spinner
                     if isLoading {
                         ProgressView().padding()
                     } else {
@@ -82,22 +88,21 @@ struct SignUpView: View {
                         .padding(.top, 10)
                     }
 
-                    // MARK: - Navigation to Login View
+                    // MARK: - Navigation to Log In
                     NavigationLink(destination: LogInView()) {
                         Text("Already have an account? Sign In")
                             .foregroundColor(.white)
                     }
 
-                    // MARK: - Navigation to Home View (Post Signup)
+                    // MARK: - Navigation to Home (on success)
                     .navigationDestination(isPresented: $navigateToHome) {
                         HomeView()
                     }
                 }
                 .padding()
-                // Alert shown after validation error or signup success
                 .alert(isPresented: $showAlert) {
                     Alert(
-                        title: Text("Sign Up"),
+                        title: Text("Sign Up Error"),
                         message: Text(alertMessage),
                         dismissButton: .default(Text("OK"))
                     )
@@ -106,8 +111,98 @@ struct SignUpView: View {
         }
     }
 
-    // MARK: - Reusable Input Field
-    /// Text input field with styling, supports email and text modes
+    // MARK: - Sign Up Function
+    /// Handles form validation, calls Firebase, sets display name, and navigates on success
+    private func signUp() {
+        do {
+            // 1. Validate form input before hitting Firebase
+            try validateForm()
+            isLoading = true
+
+            // 2. Create new user with Firebase
+            Auth.auth().createUser(withEmail: email, password: password) { result, error in
+                DispatchQueue.main.async {
+                    isLoading = false
+
+                    if let error = error as NSError? {
+                        // 3. Handle Firebase error and show user-friendly alert
+                        alertMessage = firebaseErrorMessage(from: error)
+                        showAlert = true
+                        return
+                    }
+
+                    // 4. Set display name for the user (optional)
+                    if let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest() {
+                        changeRequest.displayName = "\(firstName) \(lastName)"
+                        changeRequest.commitChanges { _ in }
+                    }
+
+                    // 5. Navigate to Home on success
+                    navigateToHome = true
+                }
+            }
+        } catch {
+            // Handle form validation errors
+            alertMessage = error.localizedDescription
+            showAlert = true
+        }
+    }
+
+    // MARK: - Form Validation Logic
+    /// Validates name, email, password format, and password match
+    private func validateForm() throws {
+        let nameRegex = "^[A-Za-z]+(?:[\\s-][A-Za-z]+)*$"
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        let passwordRegex = #"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"#
+
+        let namePredicate = NSPredicate(format: "SELF MATCHES %@", nameRegex)
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        let passwordPredicate = NSPredicate(format: "SELF MATCHES %@", passwordRegex)
+
+        // Validate full name
+        guard namePredicate.evaluate(with: "\(firstName) \(lastName)") else {
+            throw SignUpError.invalidName
+        }
+
+        // Validate email format
+        guard emailPredicate.evaluate(with: email) else {
+            throw SignUpError.invalidEmail
+        }
+
+        // Validate password strength
+        guard passwordPredicate.evaluate(with: password) else {
+            throw SignUpError.invalidPassword
+        }
+
+        // Check if passwords match
+        guard password == confirmPassword else {
+            throw SignUpError.passwordsDoNotMatch
+        }
+    }
+
+    // MARK: - Firebase Error Mapping
+    /// Maps FirebaseAuth error codes to user-friendly messages
+    private func firebaseErrorMessage(from error: NSError) -> String {
+        guard let code = AuthErrorCode(rawValue: error.code) else {
+            return error.localizedDescription
+        }
+
+        switch code {
+        case .invalidEmail:
+            return "The email address is badly formatted."
+        case .emailAlreadyInUse:
+            return "This email is already in use. Please log in or use another email."
+        case .weakPassword:
+            return "The password is too weak. It must be at least 8 characters, with letters, numbers, and special characters."
+        case .networkError:
+            return "Network error. Please check your internet connection."
+        default:
+            return error.localizedDescription
+        }
+    }
+
+    // MARK: - Reusable Input TextField
+    /// Text input used for first name, last name, and email
     private func inputField(_ title: String, text: Binding<String>, isEmail: Bool = false) -> some View {
         TextField(title, text: text)
             .padding(.horizontal, 10)
@@ -120,23 +215,24 @@ struct SignUpView: View {
             .disableAutocorrection(true)
     }
 
-    // MARK: - Secure Password Field with Visibility Toggle
+    // MARK: - Secure Field with Eye Icon Toggle
+    /// Used for password and confirm password fields
     private func secureInputField(_ title: String, text: Binding<String>, isVisible: Binding<Bool>) -> some View {
         HStack {
             Group {
                 if isVisible.wrappedValue {
-                    TextField(title, text: text) // Show plain text
+                    TextField(title, text: text)
                 } else {
-                    SecureField(title, text: text) // Hide characters
+                    SecureField(title, text: text)
                 }
             }
             .padding(.horizontal, 10)
             .frame(height: 55)
 
-            // Eye icon toggles password visibility
-            Button(action: {
+            // Toggle button for show/hide
+            Button {
                 isVisible.wrappedValue.toggle()
-            }) {
+            } label: {
                 Image(systemName: isVisible.wrappedValue ? "eye.slash" : "eye")
                     .foregroundColor(.gray)
             }
@@ -146,73 +242,10 @@ struct SignUpView: View {
         .cornerRadius(10)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray, lineWidth: 1))
     }
-
-    // MARK: - Sign Up Action Logic
-    private func signUp() {
-        do {
-            try validateForm() // Perform form validation
-            isLoading = true
-
-            // Simulate API delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                isLoading = false
-                alertMessage = "Welcome to CookCraft, \(firstName)."
-                showAlert = true
-                navigateToHome = true
-            }
-        } catch {
-            alertMessage = error.localizedDescription
-            showAlert = true
-        }
-    }
-
-    // MARK: - Input Validation
-    /// Validates all fields with regex and logical checks
-    private func validateForm() throws {
-        // Regex patterns
-        let nameRegex = "^[ a-zA-Z]+(?:[\\s-][a-zA-Z]+)*$" // Validates first and last name (letters only)
-        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$" // Standard email format
-        let passwordRegex = #"^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"# // Password must contain 1 letter, 1 digit, 1 special character
-
-        // Predicates for validation
-        let namePredicate = NSPredicate(format: "SELF MATCHES %@", nameRegex)
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        let passwordPredicate = NSPredicate(format: "SELF MATCHES %@", passwordRegex)
-
-        // Validation checks
-        guard namePredicate.evaluate(with: "\(firstName) \(lastName)") else {
-            throw SignUpError.invalidName
-        }
-        guard emailPredicate.evaluate(with: email) else {
-            throw SignUpError.invalidEmail
-        }
-        guard passwordPredicate.evaluate(with: password) else {
-            throw SignUpError.invalidPassword
-        }
-        guard password == confirmPassword else {
-            throw SignUpError.passwordsDoNotMatch
-        }
-    }
 }
 
-// MARK: - Hex Color Extension
-extension Color {
-    /// Initialize SwiftUI Color from hex string (e.g., "#4F9B75")
-    init(hex: String) {
-        let scanner = Scanner(string: hex)
-        _ = scanner.scanString("#") // Skip hash symbol
-        var rgb: UInt64 = 0
-        scanner.scanHexInt64(&rgb)
-
-        let r = Double((rgb >> 16) & 0xFF) / 255
-        let g = Double((rgb >> 8) & 0xFF) / 255
-        let b = Double(rgb & 0xFF) / 255
-
-        self.init(red: r, green: g, blue: b)
-    }
-}
-
-// MARK: - Error Handling for Validation Failures
+// MARK: - Form Validation Errors
+/// Enum used to define custom error messages
 enum SignUpError: Error, LocalizedError {
     case invalidName
     case invalidEmail
@@ -226,14 +259,29 @@ enum SignUpError: Error, LocalizedError {
         case .invalidEmail:
             return "Please enter a valid email address."
         case .invalidPassword:
-            return "Password must be at least 8 characters and include a letter, a number, and a special character."
+            return "Password must be at least 8 characters, include a number and a special character."
         case .passwordsDoNotMatch:
             return "Passwords do not match."
         }
     }
 }
 
-// MARK: - Preview
+// MARK: - Hex Color Initializer Extension
+extension Color {
+    /// Create SwiftUI Color from hex string like "#4F9B75"
+    init(hex: String) {
+        let scanner = Scanner(string: hex)
+        _ = scanner.scanString("#")
+        var rgb: UInt64 = 0
+        scanner.scanHexInt64(&rgb)
+        let r = Double((rgb >> 16) & 0xFF) / 255
+        let g = Double((rgb >> 8) & 0xFF) / 255
+        let b = Double(rgb & 0xFF) / 255
+        self.init(red: r, green: g, blue: b)
+    }
+}
+
+// MARK: - Live Preview
 #Preview {
     SignUpView()
 }

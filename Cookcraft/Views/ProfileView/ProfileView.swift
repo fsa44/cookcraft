@@ -1,15 +1,22 @@
 import SwiftUI
+import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
 
+// MARK: – Profile View
 struct ProfileView: View {
     @StateObject private var userProfileController = UserProfileController()
     @State private var showSignOutAnimation = false
-    @State private var showDeleteAnimation = false
-    @State private var notifications: [String] = []
+    @State private var showDeleteAnimation   = false
+
+    // Separate state for error alert
+    @State private var showProfileError = false
+    @State private var profileErrorMsg  = ""
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background Gradient
+                // Background gradient
                 LinearGradient(
                     gradient: Gradient(colors: [Color(hex: "#63AD7A"), Color(hex: "#0A3D2F")]),
                     startPoint: .topLeading,
@@ -18,9 +25,9 @@ struct ProfileView: View {
                 .ignoresSafeArea()
 
                 List {
-                    // Profile Section
+                    // MARK: – Profile Header
                     Section {
-                        HStack {
+                        HStack(spacing: 12) {
                             Text(userProfileController.initials)
                                 .font(.title)
                                 .fontWeight(.semibold)
@@ -33,8 +40,6 @@ struct ProfileView: View {
                                 Text(userProfileController.fullName)
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                    .padding(.top, 4)
-
                                 Text(userProfileController.email)
                                     .font(.footnote)
                                     .foregroundColor(.gray)
@@ -43,116 +48,96 @@ struct ProfileView: View {
                         .redacted(reason: userProfileController.isLoading ? .placeholder : [])
                     }
 
-                    // Main Menu Section
+                    // MARK: – Main Menu
                     Section("Main Menu") {
                         NavigationLink(destination: AccountsView()) {
-                            ProfileComponents(
-                                imageName: "key.fill",
-                                title: "Account",
-                                tintColor: Color(.systemGray),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "key.fill", title: "Account")
                         }
-
                         NavigationLink(destination: AnalyticsView()) {
-                            ProfileComponents(
-                                imageName: "chart.pie",
-                                title: "Meal Planner",
-                                tintColor: Color(.systemGray),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "chart.pie", title: "Meal Planner")
                         }
-
                         NavigationLink(destination: ProductsView()) {
-                            ProfileComponents(
-                                imageName: "archivebox.fill",
-                                title: "Products",
-                                tintColor: Color(.systemGray),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "archivebox.fill", title: "Products")
                         }
-
                         NavigationLink(destination: ScheduleView()) {
-                            ProfileComponents(
-                                imageName: "person.2.fill",
-                                title: "Schedule",
-                                tintColor: Color(.systemGray),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "person.2.fill", title: "Schedule")
                         }
                     }
 
-                    // Settings Section
+                    // MARK: – Settings
                     Section("Settings") {
                         NavigationLink(destination: SettingsView()) {
-                            ProfileComponents(
-                                imageName: "gearshape.fill",
-                                title: "Settings",
-                                tintColor: Color(.systemGray),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "gearshape.fill", title: "Settings")
                         }
-
                         NavigationLink(destination: VersionView()) {
-                            ProfileComponents(
-                                imageName: "gear",
-                                title: "Version",
-                                tintColor: Color(.systemGray),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "gear", title: "Version")
                         }
                     }
 
-                    // Sign Out and Delete Account Section
+                    // MARK: – Sign Out / Delete
                     Section {
                         Button(action: signOut) {
-                            ProfileComponents(
-                                imageName: "rectangle.portrait.and.arrow.right",
-                                title: "Sign Out",
-                                tintColor: Color(.systemBlue),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "rectangle.portrait.and.arrow.right", title: "Sign Out", tint: .blue)
                         }
                         .alert("Signing Out", isPresented: $showSignOutAnimation) {
-                            Button("OK", role: .cancel) {}
+                            Button("OK", role: .cancel) { }
                         } message: {
                             Text("You have successfully signed out.")
                         }
 
                         Button(action: deleteAccount) {
-                            ProfileComponents(
-                                imageName: "trash",
-                                title: "Delete Account",
-                                tintColor: Color(.red),
-                                scrollOffset: 0)
+                            ProfileRow(icon: "trash", title: "Delete Account", tint: .red)
                         }
                         .alert("Deleting Account", isPresented: $showDeleteAnimation) {
-                            Button("OK", role: .cancel) {}
+                            Button("OK", role: .cancel) { }
                         } message: {
                             Text("Your account has been deleted.")
                         }
                     }
                 }
-                .scrollContentBackground(.hidden) // Make List background transparent
+                .scrollContentBackground(.hidden)
             }
+        }
+        .navigationBarHidden(true)
+
+        // Observe errorMessage publisher
+        .onReceive(userProfileController.$errorMessage.compactMap { $0 }) { err in
+            profileErrorMsg  = err
+            showProfileError = true
+        }
+        .alert("Profile Error", isPresented: $showProfileError) {
+            Button("OK", role: .cancel) {
+                // clear after dismiss
+                userProfileController.errorMessage = nil
+            }
+        } message: {
+            Text(profileErrorMsg)
         }
     }
 
-    // Placeholder Sign Out Logic
-    func signOut() {
+    // MARK: – Sign Out Logic
+    private func signOut() {
         showSignOutAnimation = true
-        print("User signed out")
-
+        try? Auth.auth().signOut()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first {
-                window.rootViewController = UIHostingController(rootView: LogInView())
-                window.makeKeyAndVisible()
-            }
+            guard
+              let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first
+            else { return }
+            window.rootViewController = UIHostingController(rootView: LogInView())
+            window.makeKeyAndVisible()
         }
     }
 
-    // Placeholder Delete Logic
-    func deleteAccount() {
+    // MARK: – Delete Account Logic
+    private func deleteAccount() {
         showDeleteAnimation = true
-        print("User account deleted")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first {
+        Auth.auth().currentUser?.delete { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                guard
+                  let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = scene.windows.first
+                else { return }
                 window.rootViewController = UIHostingController(rootView: SignUpView())
                 window.makeKeyAndVisible()
             }
@@ -160,31 +145,41 @@ struct ProfileView: View {
     }
 }
 
-
-
-#Preview {
-    ProfileView()
-}
-
-
-struct ProfileComponents: View {
-    let imageName: String
+// MARK: – Helper Row View
+struct ProfileRow: View {
+    let icon: String
     let title: String
-    let tintColor: Color
-    let scrollOffset: CGFloat
+    var tint: Color = .white
 
     var body: some View {
         HStack {
-            Image(systemName: imageName)
-                .foregroundColor(tintColor)
+            Image(systemName: icon)
+                .foregroundColor(tint)
                 .frame(width: 32, height: 32)
-
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(.primary)
-
             Spacer()
         }
         .padding(.vertical, 8)
     }
+}
+
+// MARK: – Hex-to-Color Extension
+//extension Color {
+//    init(hex: String) {
+//        let scanner = Scanner(string: hex)
+//        _ = scanner.scanString("#")
+//        var rgb: UInt64 = 0
+//        scanner.scanHexInt64(&rgb)
+//        self.init(
+//            red:   Double((rgb >> 16) & 0xFF) / 255,
+//            green: Double((rgb >>  8) & 0xFF) / 255,
+//            blue:  Double( rgb        & 0xFF) / 255
+//        )
+//    }
+//}
+
+// MARK: – Preview
+#Preview {
+    ProfileView()
 }
