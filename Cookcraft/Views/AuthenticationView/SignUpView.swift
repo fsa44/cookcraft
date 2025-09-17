@@ -130,10 +130,12 @@ struct SignUpView: View {
                         showAlert = true
                         return
                     }
+                    // Capitalize first and last name properly
+                    let formattedFirstName = firstName.trimmingCharacters(in: .whitespaces).capitalized
+                    let formattedLastName = lastName.trimmingCharacters(in: .whitespaces).capitalized
 
-                    // 4. Set display name for the user (optional)
                     if let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest() {
-                        changeRequest.displayName = "\(firstName) \(lastName)"
+                        changeRequest.displayName = "\(formattedFirstName) \(formattedLastName)"
                         changeRequest.commitChanges { _ in }
                     }
 
@@ -151,7 +153,8 @@ struct SignUpView: View {
     // MARK: - Form Validation Logic
     /// Validates name, email, password format, and password match
     private func validateForm() throws {
-        let nameRegex = "^[A-Za-z]+(?:[\\s-][A-Za-z]+)*$"
+        // Updated regex for name validation
+        let nameRegex = "^[A-Za-z]+([\\s-][A-Za-z]+)*$"
         let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
         let passwordRegex = #"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"#
 
@@ -159,8 +162,15 @@ struct SignUpView: View {
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
         let passwordPredicate = NSPredicate(format: "SELF MATCHES %@", passwordRegex)
 
+        // Trim spaces from first and last names before combining
+        let trimmedFirstName = firstName.trimmingCharacters(in: .whitespaces)
+        let trimmedLastName = lastName.trimmingCharacters(in: .whitespaces)
+        
+        // Combine and trim spaces around the full name
+        let trimmedName = "\(trimmedFirstName) \(trimmedLastName)".trimmingCharacters(in: .whitespaces)
+        
         // Validate full name
-        guard namePredicate.evaluate(with: "\(firstName) \(lastName)") else {
+        guard namePredicate.evaluate(with: trimmedName) else {
             throw SignUpError.invalidName
         }
 
@@ -179,6 +189,8 @@ struct SignUpView: View {
             throw SignUpError.passwordsDoNotMatch
         }
     }
+
+
 
     // MARK: - Firebase Error Mapping
     /// Maps FirebaseAuth error codes to user-friendly messages

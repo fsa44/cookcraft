@@ -228,18 +228,21 @@ struct HomeView: View {
 
         if let fullName = user.displayName,
            !fullName.trimmingCharacters(in: .whitespaces).isEmpty {
+            // Capitalize each part of the name just in case
             userName = fullName
-        }
-        else if let email = user.email,
-                let localPart = email.components(separatedBy: "@").first,
-                !localPart.isEmpty {
+                .trimmingCharacters(in: .whitespaces)
+                .split(separator: " ")
+                .map { $0.capitalized }
+                .joined(separator: " ")
+        } else if let email = user.email,
+                  let localPart = email.components(separatedBy: "@").first,
+                  !localPart.isEmpty {
             userName = localPart
                 .replacingOccurrences(of: ".", with: " ")
                 .split(separator: " ")
                 .map { $0.capitalized }
                 .joined(separator: " ")
-        }
-        else {
+        } else {
             userName = "User"
             errorMessage = "Unable to fetch full name."
         }
@@ -291,6 +294,8 @@ struct HomeView: View {
         .resume()
     }
 }
+
+
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
