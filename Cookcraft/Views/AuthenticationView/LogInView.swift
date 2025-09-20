@@ -138,7 +138,7 @@ struct LogInView: View {
     // MARK: - Map Firebase Errors to User-Friendly Messages
     private func firebaseErrorMessage(from error: NSError) -> String {
         guard let code = AuthErrorCode(rawValue: error.code) else {
-            return error.localizedDescription
+            return "Provide correct details to login"
         }
         switch code {
         case .invalidEmail:
@@ -152,7 +152,7 @@ struct LogInView: View {
         case .networkError:
             return "Network error. Please check your internet connection and try again."
         default:
-            return error.localizedDescription
+            return "Provide correct details to login"
         }
     }
 

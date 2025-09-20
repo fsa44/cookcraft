@@ -20,15 +20,23 @@ class UserProfileController: ObservableObject {
     @Published var errorMessage: String?     // nil means “no error”
 
     private var cancellables = Set<AnyCancellable>()
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle? // Store the listener handle
 
     init() {
         // Listen for auth changes
-        Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] auth, user in
             if let user = user {
                 self?.fetchUserProfile(userId: user.uid)
             } else {
                 self?.resetToGuest()
             }
+        }
+    }
+
+    deinit {
+        // Remove the auth state listener when the object is deinitialized
+        if let handle = authStateListenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
         }
     }
 
