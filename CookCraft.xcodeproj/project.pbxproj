@@ -1,0 +1,638 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		67240ABD2EA45B7A0003CB62 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 67240ABC2EA45B7A0003CB62 /* Auth */; };
+		67240ABF2EA45B7A0003CB62 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 67240ABE2EA45B7A0003CB62 /* Functions */; };
+		67240AC12EA45B7A0003CB62 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC02EA45B7A0003CB62 /* PostgREST */; };
+		67240AC32EA45B7A0003CB62 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC22EA45B7A0003CB62 /* Realtime */; };
+		67240AC52EA45B7A0003CB62 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC42EA45B7A0003CB62 /* Storage */; };
+		67240AC72EA45B7A0003CB62 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC62EA45B7A0003CB62 /* Supabase */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		67240A902EA453460003CB62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 67240A7A2EA453440003CB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 67240A812EA453440003CB62;
+			remoteInfo = CookCraft;
+		};
+		67240A9A2EA453460003CB62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 67240A7A2EA453440003CB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 67240A812EA453440003CB62;
+			remoteInfo = CookCraft;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		67240A822EA453440003CB62 /* CookCraft.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CookCraft.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		67240A8F2EA453460003CB62 /* CookCraftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CookCraftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		67240A992EA453460003CB62 /* CookCraftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CookCraftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		67240AD42EA45CF80003CB62 /* Exceptions for "CookCraft" folder in "CookCraft" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 67240A812EA453440003CB62 /* CookCraft */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		67240A842EA453440003CB62 /* CookCraft */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				67240AD42EA45CF80003CB62 /* Exceptions for "CookCraft" folder in "CookCraft" target */,
+			);
+			path = CookCraft;
+			sourceTree = "<group>";
+		};
+		67240A922EA453460003CB62 /* CookCraftTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CookCraftTests;
+			sourceTree = "<group>";
+		};
+		67240A9C2EA453460003CB62 /* CookCraftUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CookCraftUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		67240A7F2EA453440003CB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67240AC12EA45B7A0003CB62 /* PostgREST in Frameworks */,
+				67240ABF2EA45B7A0003CB62 /* Functions in Frameworks */,
+				67240AC72EA45B7A0003CB62 /* Supabase in Frameworks */,
+				67240ABD2EA45B7A0003CB62 /* Auth in Frameworks */,
+				67240AC52EA45B7A0003CB62 /* Storage in Frameworks */,
+				67240AC32EA45B7A0003CB62 /* Realtime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67240A8C2EA453460003CB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67240A962EA453460003CB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		67240A792EA453440003CB62 = {
+			isa = PBXGroup;
+			children = (
+				67240A842EA453440003CB62 /* CookCraft */,
+				67240A922EA453460003CB62 /* CookCraftTests */,
+				67240A9C2EA453460003CB62 /* CookCraftUITests */,
+				67240A832EA453440003CB62 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		67240A832EA453440003CB62 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				67240A822EA453440003CB62 /* CookCraft.app */,
+				67240A8F2EA453460003CB62 /* CookCraftTests.xctest */,
+				67240A992EA453460003CB62 /* CookCraftUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		67240A812EA453440003CB62 /* CookCraft */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67240AA32EA453460003CB62 /* Build configuration list for PBXNativeTarget "CookCraft" */;
+			buildPhases = (
+				67240A7E2EA453440003CB62 /* Sources */,
+				67240A7F2EA453440003CB62 /* Frameworks */,
+				67240A802EA453440003CB62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				67240A842EA453440003CB62 /* CookCraft */,
+			);
+			name = CookCraft;
+			packageProductDependencies = (
+				67240ABC2EA45B7A0003CB62 /* Auth */,
+				67240ABE2EA45B7A0003CB62 /* Functions */,
+				67240AC02EA45B7A0003CB62 /* PostgREST */,
+				67240AC22EA45B7A0003CB62 /* Realtime */,
+				67240AC42EA45B7A0003CB62 /* Storage */,
+				67240AC62EA45B7A0003CB62 /* Supabase */,
+			);
+			productName = CookCraft;
+			productReference = 67240A822EA453440003CB62 /* CookCraft.app */;
+			productType = "com.apple.product-type.application";
+		};
+		67240A8E2EA453460003CB62 /* CookCraftTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67240AA62EA453460003CB62 /* Build configuration list for PBXNativeTarget "CookCraftTests" */;
+			buildPhases = (
+				67240A8B2EA453460003CB62 /* Sources */,
+				67240A8C2EA453460003CB62 /* Frameworks */,
+				67240A8D2EA453460003CB62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				67240A912EA453460003CB62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				67240A922EA453460003CB62 /* CookCraftTests */,
+			);
+			name = CookCraftTests;
+			packageProductDependencies = (
+			);
+			productName = CookCraftTests;
+			productReference = 67240A8F2EA453460003CB62 /* CookCraftTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		67240A982EA453460003CB62 /* CookCraftUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67240AA92EA453460003CB62 /* Build configuration list for PBXNativeTarget "CookCraftUITests" */;
+			buildPhases = (
+				67240A952EA453460003CB62 /* Sources */,
+				67240A962EA453460003CB62 /* Frameworks */,
+				67240A972EA453460003CB62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				67240A9B2EA453460003CB62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				67240A9C2EA453460003CB62 /* CookCraftUITests */,
+			);
+			name = CookCraftUITests;
+			packageProductDependencies = (
+			);
+			productName = CookCraftUITests;
+			productReference = 67240A992EA453460003CB62 /* CookCraftUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		67240A7A2EA453440003CB62 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					67240A812EA453440003CB62 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					67240A8E2EA453460003CB62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 67240A812EA453440003CB62;
+					};
+					67240A982EA453460003CB62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 67240A812EA453440003CB62;
+					};
+				};
+			};
+			buildConfigurationList = 67240A7D2EA453440003CB62 /* Build configuration list for PBXProject "CookCraft" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 67240A792EA453440003CB62;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 67240A832EA453440003CB62 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				67240A812EA453440003CB62 /* CookCraft */,
+				67240A8E2EA453460003CB62 /* CookCraftTests */,
+				67240A982EA453460003CB62 /* CookCraftUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		67240A802EA453440003CB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67240A8D2EA453460003CB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67240A972EA453460003CB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		67240A7E2EA453440003CB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67240A8B2EA453460003CB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		67240A952EA453460003CB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		67240A912EA453460003CB62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 67240A812EA453440003CB62 /* CookCraft */;
+			targetProxy = 67240A902EA453460003CB62 /* PBXContainerItemProxy */;
+		};
+		67240A9B2EA453460003CB62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 67240A812EA453440003CB62 /* CookCraft */;
+			targetProxy = 67240A9A2EA453460003CB62 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		67240AA12EA453460003CB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		67240AA22EA453460003CB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		67240AA42EA453460003CB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CookCraft/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CookCraft.CookCraft;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		67240AA52EA453460003CB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CookCraft/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CookCraft.CookCraft;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		67240AA72EA453460003CB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CookCraft.CookCraftTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CookCraft.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CookCraft";
+			};
+			name = Debug;
+		};
+		67240AA82EA453460003CB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CookCraft.CookCraftTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CookCraft.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CookCraft";
+			};
+			name = Release;
+		};
+		67240AAA2EA453460003CB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CookCraft.CookCraftUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = CookCraft;
+			};
+			name = Debug;
+		};
+		67240AAB2EA453460003CB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CookCraft.CookCraftUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = CookCraft;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		67240A7D2EA453440003CB62 /* Build configuration list for PBXProject "CookCraft" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67240AA12EA453460003CB62 /* Debug */,
+				67240AA22EA453460003CB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		67240AA32EA453460003CB62 /* Build configuration list for PBXNativeTarget "CookCraft" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67240AA42EA453460003CB62 /* Debug */,
+				67240AA52EA453460003CB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		67240AA62EA453460003CB62 /* Build configuration list for PBXNativeTarget "CookCraftTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67240AA72EA453460003CB62 /* Debug */,
+				67240AA82EA453460003CB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		67240AA92EA453460003CB62 /* Build configuration list for PBXNativeTarget "CookCraftUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67240AAA2EA453460003CB62 /* Debug */,
+				67240AAB2EA453460003CB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		67240ABC2EA45B7A0003CB62 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		67240ABE2EA45B7A0003CB62 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		67240AC02EA45B7A0003CB62 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		67240AC22EA45B7A0003CB62 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		67240AC42EA45B7A0003CB62 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		67240AC62EA45B7A0003CB62 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 67240A7A2EA453440003CB62 /* Project object */;
+}
