@@ -8,8 +8,18 @@ struct CustomTabView: View {
         ZStack {
             // Main Content Area
             Group {
-                if selectedTab == 0 {
+//                if selectedTab == 0 {
+//                    HomeView()
+//                        .transition(.opacity.combined(with: .scale))
+//                } else {
+//                    ProfileView()
+//                        .transition(.opacity.combined(with: .scale))
+//                }
+                if selectedTab == 0{
                     HomeView()
+                        .transition(.opacity.combined(with: .scale))
+                } else if selectedTab == 1 {
+                    BMIView()
                         .transition(.opacity.combined(with: .scale))
                 } else {
                     ProfileView()
@@ -29,7 +39,10 @@ struct CustomTabView: View {
                 Spacer()
                 tabBarItem(icon: "house", label: "Home", index: 0)
                 Spacer()
-                tabBarItem(icon: "person", label: "Profile", index: 1)
+                tabBarItem(icon: "heart", label: "BMI", index: 1)
+                Spacer()
+                tabBarItem(icon: "person", label: "Profile", index: 2)
+                Spacer()
 
             }
             .padding(.vertical, 10)       // ⬆️ Makes the capsule taller
