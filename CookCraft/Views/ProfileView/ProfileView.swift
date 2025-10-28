@@ -146,12 +146,30 @@ struct ProfileView: View {
                         .padding(.horizontal)
                         .padding(.top, 10)
                     }
+                    
+                    // MARK: - Navigate to BMI Results Widget
+//                    NavigationLink(destination: BMIResultModal()) {
+//                        HStack {
+//                            Text("BMI Results")
+//                                .font(.headline)
+//                                .foregroundColor(.white)
+//                            Spacer()
+//                            Image(systemName: "checkmark.circle.fill") // You can use another SF Symbol if preferred
+//                                .foregroundColor(.white)
+//                        }
+//                        .padding()
+//                        .background(Color.white.opacity(0.3))
+//                        .cornerRadius(12)
+//                        .shadow(radius: 6)
+//                        .padding(.horizontal)
+//                        .padding(.top, 10)
+//                    }
 
                     Spacer()
 
                     // MARK: - BIO Section
                     Divider()
-                        .background(Color.white.opacity(3.5))
+                        .background(Color.white.opacity(0.5))
                         .padding(.bottom, 10)
                         .padding(.top, -35)
 
@@ -174,12 +192,12 @@ struct ProfileView: View {
                                 .foregroundColor(.white.opacity(0.6))
                         }
                     }
-                    .padding(.bottom, 90)
+                    .padding(.bottom, 70)
                     .padding(.trailing, 220)
 
                     // MARK: - Sign Out / Delete Account Section
                     Divider()
-                        .background(Color.white.opacity(5.5))
+                        .background(Color.white.opacity(0.5))
 //                        .padding(.bottom, 12)
                         .padding(.top, -50)
 
@@ -217,7 +235,7 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top, -30)
-                    .padding(.bottom, 125) // Change here to adjust how close of far the about and sign/delete button move up overally on the screen 
+                    .padding(.bottom, 105) // Change here to adjust how close of far the about and sign/delete button move up overally on the screen
                 } // VStack
             } // ZStack
             .navigationBarHidden(true)
