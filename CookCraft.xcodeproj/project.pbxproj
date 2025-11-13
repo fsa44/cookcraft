@@ -13,6 +13,7 @@
 		67240AC32EA45B7A0003CB62 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC22EA45B7A0003CB62 /* Realtime */; };
 		67240AC52EA45B7A0003CB62 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC42EA45B7A0003CB62 /* Storage */; };
 		67240AC72EA45B7A0003CB62 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 67240AC62EA45B7A0003CB62 /* Supabase */; };
+		6765C0312EC3195E0012E70D /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6765C0302EC3195E0012E70D /* SDWebImageSwiftUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6765C0312EC3195E0012E70D /* SDWebImageSwiftUI in Frameworks */,
 				67240AC12EA45B7A0003CB62 /* PostgREST in Frameworks */,
 				67240ABF2EA45B7A0003CB62 /* Functions in Frameworks */,
 				67240AC72EA45B7A0003CB62 /* Supabase in Frameworks */,
@@ -146,6 +148,7 @@
 				67240AC22EA45B7A0003CB62 /* Realtime */,
 				67240AC42EA45B7A0003CB62 /* Storage */,
 				67240AC62EA45B7A0003CB62 /* Supabase */,
+				6765C0302EC3195E0012E70D /* SDWebImageSwiftUI */,
 			);
 			productName = CookCraft;
 			productReference = 67240A822EA453440003CB62 /* CookCraft.app */;
@@ -231,6 +234,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				6765C02F2EC3195E0012E70D /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 67240A832EA453440003CB62 /* Products */;
@@ -599,6 +603,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		6765C02F2EC3195E0012E70D /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -631,6 +643,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 67240ABB2EA45B7A0003CB62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		6765C0302EC3195E0012E70D /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6765C02F2EC3195E0012E70D /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

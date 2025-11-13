@@ -3,6 +3,7 @@ import SwiftUI
 
 struct CustomTabView: View {
     @State private var selectedTab = 0
+    @State private var plannedRecipes: [PlannedRecipe] = []
 
     var body: some View {
         ZStack {
@@ -15,17 +16,20 @@ struct CustomTabView: View {
 //                    ProfileView()
 //                        .transition(.opacity.combined(with: .scale))
 //                }
-                if selectedTab == 0{
-                    HomeView()
-                        .transition(.opacity.combined(with: .scale))
-                } else if selectedTab == 1 {
-                    BMIView()
-                        .transition(.opacity.combined(with: .scale))
-                } else {
-                    ProfileView()
-                        .transition(.opacity.combined(with: .scale))
-                }
-            }
+                if selectedTab == 0 {
+                     HomeView()
+                         .transition(.opacity.combined(with: .scale))
+                 } else if selectedTab == 1 {
+                     BMIView()
+                         .transition(.opacity.combined(with: .scale))
+                 } else if selectedTab == 2 {
+                     PlannerView(plannedRecipes: $plannedRecipes)
+                         .transition(.opacity.combined(with: .scale))
+                 } else {
+                     ProfileView()
+                         .transition(.opacity.combined(with: .scale))
+                 }
+             }
             .background(
                 // Full-screen background gradient behind content
                 LinearGradient(colors: [Color(hex: "1B3528"), Color(hex: "4F9B75")],
@@ -41,7 +45,9 @@ struct CustomTabView: View {
                 Spacer()
                 tabBarItem(icon: "heart", label: "BMI", index: 1)
                 Spacer()
-                tabBarItem(icon: "person", label: "Profile", index: 2)
+                tabBarItem(icon: "checklist", label: "Planner", index: 2)
+                Spacer()
+                tabBarItem(icon: "person", label: "Profile", index: 3)
                 Spacer()
 
             }

@@ -1,34 +1,42 @@
+//
+
 
 import SwiftUI
 
 struct HomeView: View {
-    // MARK: – Dependencies
     @EnvironmentObject var authService: SupabaseAuthService
+    private let recipeService = RecipeService()
 
     // MARK: – State
+    @State private var allRecipes: [Recipe] = []
+    @State private var filteredRecipes: [Recipe] = []
+    @State private var selectedCategoryRecipes: [Recipe] = []
+    @State private var showRecipeGroupModal: Bool = false
+    @State private var searchDebounceTimer: Timer? = nil
+
+
     @State private var searchText = ""
-    @State private var mealSuggestions: [String] = []
     @State private var isLoading = false
-    @State private var errorMessage: String?
+    @State private var errorMessage: String = ""
     @State private var userName: String = "Guest"
     @State private var userInitials: String = "GG"
-
     @State private var selectedDietaryFilter: String = "None"
+
     private let dietaryFilters = ["None", "Vegetarian", "Gluten-Free", "Vegan", "Dairy-Free"]
 
-    private let categories = [
-        ("Breakfast Ideas", "sun.max.fill"),
-        ("Snack Ideas", "apple.logo"),
-        ("Lunch Meals", "leaf.fill"),
-        ("Dinner Recipes", "fork.knife")
+    private let categoriesWithFiles: [(title: String, imageName: String, jsonFile: String)] = [
+        ("Breakfast Recipes", "Breakfast Image 1", "recipes_breakfast_part0.json"),
+        ("Lunch Recipes", "Lunch Image 2", "recipes_lunch_part0.json"),
+        ("Dinner Recipes", "Dinner Image 1", "recipes_dinner_part0.json"),
+        ("Snack Recipes", "Snack Image 2", "recipes_snack_part0.json"),
     ]
+
     private let articles = [
         ("Zinc Sources", "lightbulb.fill"),
         ("Vitamin A Sources", "cross.case.fill"),
         ("Healthy Eating Tips", "app.badge.checkmark")
     ]
 
-    // MARK: – Computed Properties
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
@@ -38,104 +46,177 @@ struct HomeView: View {
         }
     }
 
-    private var mealType: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12: return "breakfast"
-        case 12..<17: return "lunch"
-        default: return "dinner"
+    // MARK: – Normalization for Swahili-friendly matching
+    // MARK: – Normalization for Swahili-friendly matching
+    private func normalize(_ s: String) -> String {
+        s.folding(options: [.diacriticInsensitive, .widthInsensitive, .caseInsensitive],
+                  locale: Locale(identifier: "sw_KE"))
+         .lowercased()
+         .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: – Filtering (text + diet) — no aliases dependency
+    private func filterRecipes(_ recipes: [Recipe], query: String, dietaryFilter: String) -> [Recipe] {
+        let nq = normalize(query)
+        return recipes.filter { recipe in
+            let name = normalize(recipe.name)
+            let matchesQuery = nq.isEmpty || name.contains(nq)
+
+            let matchesDiet = dietaryFilter == "None" ||
+                recipe.dietaryTags.contains { $0.caseInsensitiveCompare(dietaryFilter) == .orderedSame }
+
+            return matchesQuery && matchesDiet
         }
     }
 
-    // MARK: – Body
+
+    // MARK: – Category loader (unchanged)
+    private func loadCategory(title: String, jsonFile: String) {
+        isLoading = true
+        errorMessage = ""
+
+        recipeService.fetchCategoryRecipes(categoryFile: jsonFile, categoryName: title) { recipes in
+            self.isLoading = false
+            if recipes.isEmpty {
+                self.errorMessage = "No recipes found for \(title)."
+            } else {
+                self.selectedCategoryRecipes = recipes
+                self.showRecipeGroupModal = true
+            }
+        }
+    }
+
+    // MARK: – Search helpers (submit + live + refilter)
+    private func fetchMealIdeas(query: String) {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return }
+
+        isLoading = true
+        errorMessage = ""
+
+        // Lazy-load the full catalog once, then filter
+        if allRecipes.isEmpty {
+            recipeService.fetchAllRecipes { recipes in
+                self.allRecipes = recipes
+                self.applySearchFilter()
+            }
+        } else {
+            self.applySearchFilter()
+        }
+    }
+
+    private func applySearchFilter() {
+        let results = filterRecipes(allRecipes, query: searchText, dietaryFilter: selectedDietaryFilter)
+        self.isLoading = false
+
+        if results.isEmpty {
+            self.errorMessage = "No recipes found."
+            self.selectedCategoryRecipes = []
+            self.showRecipeGroupModal = false
+        } else {
+            // Reuse the same modal used for categories
+            self.selectedCategoryRecipes = Array(results.prefix(16))
+            self.showRecipeGroupModal = true
+        }
+    }
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Profile Greeting
                     profileHeader
-
-                    // Search Bar
                     searchBar
-
-                    // Filter
                     filterPicker
 
-                    // Loading + Errors
                     if isLoading {
-                        ProgressView("Loading meal ideas...")
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .padding()
-                    }
-
-                    if let error = errorMessage {
-                        Text(error)
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.black.opacity(0.3))
+                    } else if !errorMessage.isEmpty {
+                        Text(errorMessage)
                             .foregroundColor(.red)
-                            .padding()
-                    }
-
-                    // Suggestions
-                    if !mealSuggestions.isEmpty {
-                        Text("Meal Suggestions:")
                             .font(.headline)
-                            .foregroundColor(.white)
-
-                        ForEach(mealSuggestions, id: \.self) { meal in
-                            Text(meal)
-                                .padding(.vertical, 5)
-                                .padding(.horizontal, 10)
-                                .background(Color.white.opacity(0.1))
-                                .cornerRadius(8)
-                                .foregroundColor(.white)
-                        }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
 
-                    // Sections
-                    categorySection
+                    CategoriesWidget(categories: categoriesWithFiles) { title, fileName in
+                        loadCategory(title: title, jsonFile: fileName)
+                    }
+                    .offset(y: -5)
+
                     articleSection
                 }
                 .padding()
             }
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.colorFromHex("#58B361"),
-                        Color.colorFromHex("#264D2A")
-                    ]),
+                    gradient: Gradient(colors: [Color.colorFromHex("#58B361"), Color.colorFromHex("#264D2A")]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
             )
+            .sheet(isPresented: $showRecipeGroupModal) {
+                RecipeGroupModal(recipes: selectedCategoryRecipes, isPresented: $showRecipeGroupModal)
+            }
         }
         .navigationBarHidden(true)
         .onAppear(perform: fetchUserName)
+        // Re-filter when the diet changes (if there’s an active query)
+        .onChange(of: selectedDietaryFilter) { _,_ in
+            if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                fetchMealIdeas(query: searchText)
+            }
+        }
+        // Live (instant) search as they type: comment out if you prefer submit-only
+        .onChange(of: searchText) { _, newValue in
+            let query = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            // Invalidate any previous typing timer
+            searchDebounceTimer?.invalidate()
+
+            if query.isEmpty {
+                // Clear UI when text is cleared
+                self.errorMessage = ""
+                self.showRecipeGroupModal = false
+                self.selectedCategoryRecipes = []
+                return
+            }
+
+            // Start a new timer (e.g., 0.6s after last key press)
+            searchDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false) { _ in
+                // Ensure catalog loaded
+                if allRecipes.isEmpty {
+                    recipeService.fetchAllRecipes { recipes in
+                        self.allRecipes = recipes
+                        self.applySearchFilter()
+                    }
+                } else {
+                    self.applySearchFilter()
+                }
+            }
+        }
+
     }
 
-    // MARK: – Profile Header with Initials
+    // MARK: – UI
+
     private var profileHeader: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Greeting and Username on the left
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(greeting),")
-                    //.font(.title2)
                     .font(.system(size: 23, weight: .regular))
                     .foregroundColor(.white)
                 Text(userName)
-                    //.font(.title)
                     .font(.system(size: 30, weight: .bold))
-                    //.font(.custom("Poppins-Bold", size: 35))
                     .bold()
                     .foregroundColor(.white)
             }
             .padding(.leading, -15)
 
-           Spacer(minLength: 20) // This will push the initials to the right side
+            Spacer(minLength: 20)
 
-            // Initials on the right
             Text(userInitials)
-               // .font(.headline)
-               // .font(.custom("Poppins-Bold", size: 30))
                 .font(.system(size: 28, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(width: 58, height: 58)
@@ -144,7 +225,6 @@ struct HomeView: View {
         }
         .padding(.horizontal)
         .padding(.trailing, -10)
-        
     }
 
     private var searchBar: some View {
@@ -153,7 +233,11 @@ struct HomeView: View {
                 .foregroundColor(.gray)
             TextField("Search for meal ideas...", text: $searchText)
                 .foregroundColor(.black)
-                .onSubmit { fetchMealIdeas(query: searchText) }
+                .autocorrectionDisabled(true)               // no autocorrect (good for Swahili terms)
+                .textInputAutocapitalization(.never)        // keep user’s casing as typed
+                .keyboardType(.default)
+                .submitLabel(.search)
+                .onSubmit { fetchMealIdeas(query: searchText) } // ← submit triggers search
         }
         .padding(.horizontal)
         .frame(height: 45)
@@ -173,58 +257,6 @@ struct HomeView: View {
         .cornerRadius(15)
     }
 
-    private var categorySection: some View {
-        VStack(alignment: .leading) {
-            Text("Categories")
-                .font(.headline)
-                .foregroundColor(.white)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 15) {
-                    ForEach(categories, id: \.0) { category, icon in
-                        categoryCard(title: category, icon: icon)
-                    }
-                }
-                .padding(.horizontal)
-            }
-        }
-    }
-
-    private func categoryCard(title: String, icon: String) -> some View {
-        VStack {
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 200, height: 180)
-
-                VStack {
-                    ZStack {
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color.blue, Color.purple]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .clipShape(Circle())
-                        .frame(width: 50, height: 50)
-
-                        Image(systemName: icon)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(.white)
-                    }
-                    Text(title)
-                        .font(.title3)
-                        .bold()
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-            }
-            .shadow(radius: 10)
-        }
-    }
-
     private var articleSection: some View {
         VStack(alignment: .leading) {
             Text("Educational Articles")
@@ -240,6 +272,7 @@ struct HomeView: View {
                 .padding(.horizontal)
             }
         }
+        .offset(y: -10)
     }
 
     private func articleCard(title: String, icon: String) -> some View {
@@ -265,6 +298,7 @@ struct HomeView: View {
                             .frame(width: 30, height: 30)
                             .foregroundColor(.white)
                     }
+
                     Text(title)
                         .font(.title3)
                         .bold()
@@ -277,11 +311,10 @@ struct HomeView: View {
         }
     }
 
-    // MARK: – Fetch Name + Initials
     private func fetchUserName() {
         guard let user = authService.user else {
-            self.userName = "Guest"
-            self.userInitials = "GG"
+            userName = "Guest"
+            userInitials = "GG"
             return
         }
 
@@ -299,71 +332,25 @@ struct HomeView: View {
         let fullName = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
         let emailFallback = user.email ?? "User"
 
-        self.userName = fullName.isEmpty ? emailFallback : fullName
+        userName = fullName.isEmpty ? emailFallback : fullName
 
         if !first.isEmpty || !last.isEmpty {
             let firstInitial = first.first.map { String($0).uppercased() } ?? ""
             let lastInitial = last.first.map { String($0).uppercased() } ?? ""
-            self.userInitials = "\(firstInitial)\(lastInitial)"
+            userInitials = "\(firstInitial)\(lastInitial)"
         } else if let email = user.email {
             let parts = email.components(separatedBy: "@").first ?? ""
             let chars = parts.prefix(2).uppercased()
-            self.userInitials = chars
+            userInitials = chars
         } else {
-            self.userInitials = "US"
+            userInitials = "US"
         }
-    }
-
-    // MARK: – API
-    private func fetchMealIdeas(query: String) {
-        guard !query.isEmpty else { return }
-        isLoading = true
-        errorMessage = nil
-
-        let apiKey = "YOUR_API_KEY"
-        let baseURL = "https://api.spoonacular.com/recipes/complexSearch"
-        var urlString = "\(baseURL)?query=\(query)&mealType=\(mealType)&apiKey=\(apiKey)"
-
-        if selectedDietaryFilter != "None" {
-            urlString += "&diet=\(selectedDietaryFilter.lowercased())"
-        }
-
-        guard let url = URL(string: urlString) else {
-            errorMessage = "Invalid URL."
-            isLoading = false
-            return
-        }
-
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            DispatchQueue.main.async {
-                defer { isLoading = false }
-                if let error = error {
-                    errorMessage = "Network error: \(error.localizedDescription)"
-                    return
-                }
-                guard let data = data else {
-                    errorMessage = "No data received."
-                    return
-                }
-                do {
-                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let results = json["results"] as? [[String: Any]] {
-                        mealSuggestions = results.compactMap { $0["title"] as? String }
-                    } else {
-                        errorMessage = "Unable to parse meal suggestions."
-                    }
-                } catch {
-                    errorMessage = "Error parsing data."
-                }
-            }
-        }.resume()
     }
 }
 
-// MARK: – Preview
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
-            .environmentObject(SupabaseAuthService()) // Inject service
+            .environmentObject(SupabaseAuthService())
     }
 }

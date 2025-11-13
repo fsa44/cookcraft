@@ -45,7 +45,7 @@ struct ProfileView: View {
                         // Left: Email
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Profile")
-                                .font(.system(size: 35, weight: .bold))
+                                .font(.system(size: 40, weight: .bold))
                                 .foregroundColor(.white)
                             Text(profile.email.isEmpty ? "example@email.com" : profile.email)
                                 .font(.system(size: 18))
@@ -148,22 +148,6 @@ struct ProfileView: View {
                     }
                     
                     // MARK: - Navigate to BMI Results Widget
-//                    NavigationLink(destination: BMIResultModal()) {
-//                        HStack {
-//                            Text("BMI Results")
-//                                .font(.headline)
-//                                .foregroundColor(.white)
-//                            Spacer()
-//                            Image(systemName: "checkmark.circle.fill") // You can use another SF Symbol if preferred
-//                                .foregroundColor(.white)
-//                        }
-//                        .padding()
-//                        .background(Color.white.opacity(0.3))
-//                        .cornerRadius(12)
-//                        .shadow(radius: 6)
-//                        .padding(.horizontal)
-//                        .padding(.top, 10)
-//                    }
 
                     Spacer()
 
