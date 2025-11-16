@@ -7,21 +7,36 @@ import Supabase
 // MARK: - Custom Auth Errors (unchanged)
 enum CustomAuthError: Error, LocalizedError {
     case invalidCredentials, emailAlreadyInUse, networkError, weakPassword, userNotFound,
-         accountLocked, invalidEmailFormat, signUpFailed, unknown(message: String)
+         accountLocked, invalidEmailFormat, signUpFailed,
+         suspendedAccount,                    // 👈 NEW
+         unknown(message: String)
+
     var errorDescription: String? {
         switch self {
-        case .invalidCredentials:  return "Your email or password is incorrect."
-        case .emailAlreadyInUse:   return "This email is already in use. Try logging in or use a different address."
-        case .networkError:        return "Network error. Please check your connection."
-        case .weakPassword:        return "Your password is too weak. Please choose a stronger password."
-        case .userNotFound:        return "No account found with this email."
-        case .accountLocked:       return "Too many failed attempts. Try again later."
-        case .invalidEmailFormat:  return "Invalid email format. Please check again."
-        case .signUpFailed:        return "Failed to sign up. Please try again."
-        case .unknown(let msg):    return msg
+        case .invalidCredentials:
+            return "Your email or password is incorrect."
+        case .emailAlreadyInUse:
+            return "This email is already in use. Try logging in or use a different address."
+        case .networkError:
+            return "Network error. Please check your connection."
+        case .weakPassword:
+            return "Your password is too weak. Please choose a stronger password."
+        case .userNotFound:
+            return "No account found with this email."
+        case .accountLocked:
+            return "Too many failed attempts. Try again later."
+        case .invalidEmailFormat:
+            return "Invalid email format. Please check again."
+        case .signUpFailed:
+            return "Failed to sign up. Please try again."
+        case .suspendedAccount:
+            return "Your account has been suspended. Please contact support."
+        case .unknown(let msg):
+            return msg
         }
     }
 }
+
 
 func mapSupabaseError(_ error: Error) -> CustomAuthError {
     let ns = error as NSError
@@ -108,11 +123,49 @@ final class SupabaseAuthService: ObservableObject {
 
     func logIn(email: String, password: String) async throws {
         do {
-            let s = try await client.auth.signIn(email: email, password: password)
-            self.session = s
-            self.user = s.user
+            // 1) Sign in (returns a Session in your SDK)
+            let session = try await client.auth.signIn(email: email, password: password)
+
+            // 2) Grab user from session
+            let user = session.user
+            self.session = session
+            self.user = user
+
+            // 3) Load profile from `profiles` and check suspension flag
+            let profiles: [Profile] = try await client
+                .from("profiles")
+                .select()
+                .eq("id", value: user.id)    // profiles.id == auth.users.id
+                .execute()
+                .value
+
+            guard let profile = profiles.first else {
+                // No profile row? Treat as userNotFound (or unknown)
+                self.session = nil
+                self.user = nil
+                self.isLoggedIn = false
+                throw CustomAuthError.userNotFound
+            }
+
+            if profile.is_suspended == true {
+                // Sign out and throw a specific suspended error
+                try await client.auth.signOut()
+                self.session = nil
+                self.user = nil
+                self.isLoggedIn = false
+                throw CustomAuthError.suspendedAccount
+            }
+
+            // 4) All good: mark as logged in
             self.isLoggedIn = true
-        } catch { throw mapSupabaseError(error) }
+
+        } catch let err as CustomAuthError {
+            // Pass through our own errors (e.g. .suspendedAccount)
+            throw err
+        } catch {
+            // Map Supabase/network errors into CustomAuthError
+            throw mapSupabaseError(error)
+        }
     }
 
     func logOut() async throws {

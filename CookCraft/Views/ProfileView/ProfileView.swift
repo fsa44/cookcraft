@@ -156,36 +156,39 @@ struct ProfileView: View {
                         .background(Color.white.opacity(0.5))
                         .padding(.bottom, 10)
                         .padding(.top, -35)
+                    // MARK: - BIO Section
+                    Divider()
+                        .background(Color.white.opacity(0.5))
+                        .padding(.top, 16)
 
-                    VStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("About Me")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                            .padding(.trailing, 35)
-                            .padding(.top, -30)
+
                         if let bio = profile.bio, !bio.isEmpty {
                             Text(bio)
                                 .font(.body)
                                 .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
+                                .multilineTextAlignment(.leading)
+//                                .fixedSize(horizontal: false, vertical: true) // ← ensures wrapping
+                                .lineLimit(nil)
                         } else {
                             Text("No bio added yet.")
                                 .font(.body)
                                 .foregroundColor(.white.opacity(0.6))
                         }
                     }
-                    .padding(.bottom, 70)
-                    .padding(.trailing, 220)
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
 
                     // MARK: - Sign Out / Delete Account Section
                     Divider()
                         .background(Color.white.opacity(0.5))
-//                        .padding(.bottom, 12)
-                        .padding(.top, -50)
+                        .padding(.vertical, 8)
 
-                    VStack(spacing: 20) {
+                    VStack(spacing: 16) {
                         // Sign Out Button
                         Button(action: { showSignOutConfirm = true }) {
                             HStack {
@@ -199,7 +202,6 @@ struct ProfileView: View {
                             .padding()
                             .background(Color.white.opacity(0.2))
                             .cornerRadius(12)
-
                         }
 
                         // Delete Account Button
@@ -218,7 +220,8 @@ struct ProfileView: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, -30)
+                    .padding(.bottom, 40)   // adjust this value if you want the buttons higher/lower
+
                     .padding(.bottom, 105) // Change here to adjust how close of far the about and sign/delete button move up overally on the screen
                 } // VStack
             } // ZStack

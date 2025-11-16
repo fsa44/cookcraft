@@ -34,8 +34,35 @@ import Foundation
 import Supabase
 
 
+//struct Profile: Codable, Equatable {
+//    var id: UUID?
+//    var is_suspended: Bool?
+//    var email: String
+//    var fullName: String
+//    var avatarURL: String?
+//    var gender: String?
+//    var age: Int?
+//    var bio: String?
+//
+//    enum CodingKeys: String, CodingKey {
+//        case id
+//        case email
+//        case fullName = "full_name"
+//        case avatarURL = "avatar_url"
+//        case gender, age, bio
+//    }
+//}
+//
+//struct UpdateProfileParams: Encodable {
+//    var gender: String?
+//    var age: Int?
+//    var bio: String?
+//    var avatar_url: String?
+//}
+
 struct Profile: Codable, Equatable {
     var id: UUID?
+    var is_suspended: Bool?
     var email: String
     var fullName: String
     var avatarURL: String?
@@ -45,6 +72,7 @@ struct Profile: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case is_suspended          // 👈 add this
         case email
         case fullName = "full_name"
         case avatarURL = "avatar_url"
@@ -52,9 +80,11 @@ struct Profile: Codable, Equatable {
     }
 }
 
+
 struct UpdateProfileParams: Encodable {
     var gender: String?
     var age: Int?
     var bio: String?
     var avatar_url: String?
 }
+

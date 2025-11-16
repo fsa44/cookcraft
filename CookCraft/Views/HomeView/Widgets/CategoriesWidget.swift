@@ -105,7 +105,7 @@ struct CategoriesWidget: View {
                     Image(imageName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 120, height: 120) // adjust as needed
+                        .frame(width: 120, height: 120 ) // adjust as needed
                         .clipShape(Circle()) // optional: makes image circular
                         .shadow(radius: 5)
 

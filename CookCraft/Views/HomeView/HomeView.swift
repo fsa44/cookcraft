@@ -26,7 +26,7 @@ struct HomeView: View {
 
     private let categoriesWithFiles: [(title: String, imageName: String, jsonFile: String)] = [
         ("Breakfast Recipes", "Breakfast Image 1", "recipes_breakfast_part0.json"),
-        ("Lunch Recipes", "Lunch Image 2", "recipes_lunch_part0.json"),
+        ("Lunch Recipes", "Lunch Image 1", "recipes_lunch_part0.json"),
         ("Dinner Recipes", "Dinner Image 1", "recipes_dinner_part0.json"),
         ("Snack Recipes", "Snack Image 2", "recipes_snack_part0.json"),
     ]

@@ -30,6 +30,6 @@ public let supabase: SupabaseClient = {
     // Use the broadest-compatible initializer for the SDK you have installed.
     return SupabaseClient(
         supabaseURL: url,
-        supabaseKey: anonKey
+        supabaseKey: anonKey,
     )
 }()
