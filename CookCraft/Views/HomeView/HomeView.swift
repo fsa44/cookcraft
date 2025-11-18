@@ -208,7 +208,7 @@ struct HomeView: View {
                     .font(.system(size: 23, weight: .regular))
                     .foregroundColor(.white)
                 Text(userName)
-                    .font(.system(size: 30, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .bold()
                     .foregroundColor(.white)
             }
