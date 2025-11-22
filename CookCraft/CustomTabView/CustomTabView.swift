@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct CustomTabView: View {
-    @State private var selectedTab = 0
+    @State private var selectedTab = 1
     @State private var plannedRecipes: [PlannedRecipe] = []
 
     var body: some View {

@@ -1,7 +1,17 @@
-import SwiftUI
+
+
+
+//
+//  BMIView.swift
+//  CookCraft
+//
+
 import Supabase
+import PostgREST
+import SwiftUI
 
 // MARK: - Unit System Enum
+
 enum UnitSystem: String, CaseIterable, Identifiable {
     case metric = "Metric (kg/cm)"
     case imperial = "Imperial (lb/in)"
@@ -9,6 +19,7 @@ enum UnitSystem: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Gender & ActivityLevel Enums
+
 enum Gender: String, CaseIterable, Identifiable {
     case male = "Male"
     case female = "Female"
@@ -16,18 +27,23 @@ enum Gender: String, CaseIterable, Identifiable {
 }
 
 enum ActivityLevel: Int, CaseIterable, Identifiable {
-    case inactive = 1, moderate = 2, active = 3
+    case inactive = 1
+    case moderate = 2
+    case active = 3
+
     var id: Int { rawValue }
+
     var label: String {
         switch self {
         case .inactive: return "Inactive"
         case .moderate: return "Moderate"
-        case .active: return "Active"
+        case .active:   return "Active"
         }
     }
 }
 
 // MARK: - BMIResult Data Model (UI-only)
+
 struct BMIResult: Identifiable {
     let id = UUID()
     let timestamp: Date
@@ -40,8 +56,11 @@ struct BMIResult: Identifiable {
 }
 
 // MARK: - Main BMI View
+
 struct BMIView: View {
     @EnvironmentObject var authService: SupabaseAuthService
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var recommendationStore: RecommendationStore
 
     @State private var unitSystem: UnitSystem = .metric
     @State private var selectedGender: Gender? = nil
@@ -55,12 +74,19 @@ struct BMIView: View {
     @State private var isSaving = false
     @State private var saveError: String?
 
-    // New: Holds current BMIResult for modal
+    // Holds current BMIResult for modal
     @State private var selectedResult: BMIResult? = nil
+
+    // Recommendation-related state
+    @State private var isLoadingRecommendation = false
+    @State private var recommendationError: String?
+    @State private var predictionResponse: PredictResponse?
+    @State private var showRecommendationSheet = false
 
     private let bmiService = BMISupabaseService()
 
     // MARK: - Conversion
+
     var convertedWeight: Double {
         guard let w = Double(weight) else { return 0 }
         return unitSystem == .metric ? w : w * 0.453592
@@ -78,12 +104,18 @@ struct BMIView: View {
     }
 
     // MARK: - Adaptive BMI Classification
-    func classifyBMI(bmiValue: Double, gender: Gender?, age: Int, activityLevel: ActivityLevel) -> String {
+
+    func classifyBMI(
+        bmiValue: Double,
+        gender: Gender?,
+        age: Int,
+        activityLevel: ActivityLevel
+    ) -> String {
         guard !bmiValue.isNaN else { return "Unknown BMI" }
         guard let gender = gender else { return "Invalid Gender" }
         guard age >= 0 else { return "Invalid Age" }
 
-        let genderStr = gender == .female ? "Female" : "Male"
+        let genderStr = (gender == .female) ? "Female" : "Male"
         var thresholds: [String: Double] = [:]
 
         if genderStr == "Female" {
@@ -108,7 +140,8 @@ struct BMIView: View {
         case .active:
             thresholds["Normal"]! += 1
             thresholds["Overweight"]! += 1
-        default: break
+        default:
+            break
         }
 
         // Modify thresholds by age
@@ -134,6 +167,7 @@ struct BMIView: View {
     }
 
     // MARK: - Dynamic Category & Colors
+
     var category: String {
         let ageInt = Int(age) ?? -1
         return classifyBMI(
@@ -147,24 +181,50 @@ struct BMIView: View {
     var categoryColor: Color {
         switch category {
         case "Underweight": return .red
-        case "Normal": return .green
-        case "Overweight": return .orange
-        case "Obese": return .red
-        default: return .gray
+        case "Normal":      return .green
+        case "Overweight":  return .orange
+        case "Obese":       return .red
+        default:            return .gray
         }
     }
 
     var gradientColors: [Color] {
         switch category {
         case "Underweight": return [Color.red, Color.red]
-        case "Normal": return [Color.green, Color.teal]
-        case "Overweight": return [Color.orange, Color.yellow]
-        case "Obese": return [Color.red, Color.pink]
-        default: return [Color.gray, Color.gray.opacity(0.5)]
+        case "Normal":      return [Color.green, Color.teal]
+        case "Overweight":  return [Color.orange, Color.yellow]
+        case "Obese":       return [Color.red, Color.pink]
+        default:            return [Color.gray, Color.gray.opacity(0.5)]
+        }
+    }
+
+    // MARK: - Derived Goal (for story text)
+
+    var derivedGoal: String {
+        switch category {
+        case "Underweight":
+            return "Weight Gain"
+        case "Normal":
+            return "Maintenance"
+        case "Overweight", "Obese":
+            return "Weight Loss"
+        default:
+            return "Balanced Eating"
+        }
+    }
+
+    // MARK: - Activity level → API string
+
+    func apiActivityLevelString(for level: ActivityLevel) -> String {
+        switch level {
+        case .inactive: return "inactive"
+        case .moderate: return "moderate"
+        case .active:   return "active"
         }
     }
 
     // MARK: - Reset
+
     func resetFields() {
         selectedGender = nil
         selectedActivityLevel = .moderate
@@ -175,253 +235,96 @@ struct BMIView: View {
         showResult = false
         animateGradient = false
         saveError = nil
+        recommendationError = nil
+    }
+
+    // MARK: - Backend: Start Recommendation
+
+    func startRecommendation() async {
+        guard showResult,
+              let gender = selectedGender,
+              let ageInt = Int(age),
+              convertedHeight > 0,
+              convertedWeight > 0
+        else {
+            return
+        }
+
+        isLoadingRecommendation = true
+        recommendationError = nil
+
+        do {
+            let heightCm = convertedHeight * 100.0
+            let weightKg = convertedWeight
+            let genderString = (gender == .female) ? "Female" : "Male"
+            let activityString = apiActivityLevelString(for: selectedActivityLevel)
+
+            // NEW: grab Supabase user id
+            let userIdString = authService.user?.id.uuidString
+
+            let request = BMIPredictRequest(
+                age: ageInt,
+                gender: genderString,
+                bmi: bmi,
+                heightCm: heightCm,
+                weightKg: weightKg,
+                activityLevel: activityString,
+                dietPreference: nil,    // later from profile
+                goal: derivedGoal,
+                allergies: nil,         // later from profile
+                userId: userIdString    // <— NEW
+            )
+
+            let response = try await BMIRecommendationService.shared
+                .predictAndExplain(request: request)
+
+            self.predictionResponse = response
+            self.recommendationStore.latestResponse = response 
+            self.showRecommendationSheet = true
+        } catch {
+            print("Prediction API error:", error)
+            self.recommendationError = "Could not fetch recommendations. Please try again."
+        }
+
+        isLoadingRecommendation = false
     }
 
     // MARK: - Body
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 25) {
-                    // Title
-                    Text("BMI Calculator")
-                        .font(.system(size: 35, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.top, 32)
-                        .padding(.trailing, 140)
+                    headerView
+                    genderUnitRow
+                    activitySection
+                    inputsSection
+                    calculateClearButtons
 
-                    // Gender + Unit Row
-                    HStack(alignment: .top, spacing: 25) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Gender")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            HStack(spacing: 20) {
-                                ForEach(Gender.allCases) { gender in
-                                    Button(action: { selectedGender = gender }) {
-                                        VStack(spacing: 8) {
-                                            Image(systemName: gender == .male ? "person" : "person.fill")
-                                                .font(.title2)
-                                            Text(gender.rawValue)
-                                                .font(.caption)
-                                        }
-                                        .padding()
-                                        .frame(width: 80, height: 80)
-                                        .background(selectedGender == gender ? Color.green : Color.gray.opacity(0.4))
-                                        .cornerRadius(12)
-                                        .foregroundColor(.white)
-                                    }
-                                }
-                            }
-                        }
+                    resultSection
 
-                        // Unit System
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Unit System")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            VStack(alignment: .leading, spacing: 10) {
-                                ForEach(UnitSystem.allCases) { unit in
-                                    Button(action: { unitSystem = unit }) {
-                                        HStack {
-                                            Image(systemName: unitSystem == unit ? "checkmark.circle.fill" : "circle")
-                                            Text(unit.rawValue)
-                                        }
-                                        .foregroundColor(.white)
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 10)
-                            .background(Color.white.opacity(0.1))
-                            .cornerRadius(12)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Activity Level
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Activity Level")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.leading, 16)
-
-                        Divider().background(Color.white.opacity(0.5))
-
-                        Picker("Activity Level", selection: $selectedActivityLevel) {
-                            ForEach(ActivityLevel.allCases) { activity in
-                                Text(activity.label).tag(activity)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal)
+                    if let recommendationError {
+                        Text(recommendationError)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                            .padding(.top, 4)
                     }
 
-                    // Inputs
-                    VStack(spacing: 15) {
-                        HStack(spacing: 15) {
-                            TextField("", text: $age, prompt: Text("Age").foregroundStyle(.white.opacity(0.8)))
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .keyboardType(.numberPad)
-                                .foregroundColor(.white)
-
-                            TextField("", text: $weight, prompt: Text("Weight").foregroundStyle(.white.opacity(0.8)))
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .keyboardType(.decimalPad)
-                                .overlay(Text(unitSystem == .metric ? "kg" : "lb").padding(.trailing, 10), alignment: .trailing)
-                                .foregroundColor(.white)
-
-                            TextField("", text: $height, prompt: Text("Height").foregroundStyle(.white.opacity(0.8)))
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(10)
-                                .keyboardType(.decimalPad)
-                                .overlay(Text(unitSystem == .metric ? "cm" : "in").padding(.trailing, 10), alignment: .trailing)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Buttons (Calculate + Clear)
-                    HStack {
-                        Button("Calculate BMI") {
-                            withAnimation(.easeInOut(duration: 1.0)) {
-                                bmi = calculatedBMI
-                                showResult = true
-                                animateGradient.toggle()
-                                saveError = nil
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background((selectedGender == nil || weight.isEmpty || height.isEmpty || age.isEmpty) ? Color.gray : Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .disabled(selectedGender == nil || weight.isEmpty || height.isEmpty || age.isEmpty)
-
-                        Button("Clear") { resetFields() }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red.opacity(0.4))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
-
-                    // Result Card
-                    if showResult {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 24)
-                                .fill(LinearGradient(
-                                    gradient: Gradient(colors: animateGradient ? gradientColors.reversed() : gradientColors),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
-                                .opacity(0.4)
-                                .frame(maxWidth: 350, minHeight: 180)
-                                .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animateGradient)
-
-                            VStack(spacing: 12) {
-                                Text(String(format: "BMI: %.2f", bmi))
-                                    .font(.title)
-                                    .bold()
-                                    .foregroundColor(categoryColor)
-
-                                Text(category)
-                                    .font(.headline)
-                                    .foregroundColor(categoryColor)
-
-                                SemiCircleChart(bmi: bmi)
-                                    .frame(height: 220)
-                                    .padding(.top, 10)
-                            }
-                            .padding(.bottom, -30)
-                        }
-                        .transition(.opacity .combined(with: .scale))
-
-                        if let saveError {
-                            Text(saveError)
-                                .foregroundColor(.red)
-                                .font(.caption)
-                                .padding(.top, 6)
-                        }
-                    }
-
-                    // Bottom Buttons
-                    HStack {
-                        // Save to DB and show modal
-                        Button(action: {
-                            guard showResult else { return }
-                            isSaving = true
-                            saveError = nil
-
-                            Task {
-                                do {
-                                    let dbRow = try await bmiService.createBMIResult(
-                                        measuredAt: Date(),
-                                        weight: Double(weight) ?? 0,
-                                        height: Double(height) ?? 0,
-                                        unit: unitSystem,
-                                        activity: selectedActivityLevel,
-                                        gender: selectedGender,
-                                        age: Int(age)
-                                    )
-
-                                    self.selectedResult = BMIResult(
-                                        timestamp: dbRow.measuredAt,
-                                        bmi: dbRow.bmi,
-                                        category: dbRow.category,
-                                        gender: selectedGender,
-                                        age: age,
-                                        activityLevel: selectedActivityLevel,
-                                        heightInMeters: dbRow.heightM
-                                    )
-                                } catch {
-                                    self.saveError = "Could not save BMI result. Please try again."
-                                    print("Save BMI error: \(error)")
-                                }
-                                isSaving = false
-                            }
-                        }) {
-                            HStack {
-                                if isSaving { ProgressView().tint(.white) }
-                                Text("Show Results")
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(showResult ? Color.blue : Color.blue.opacity(0.4))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding(.bottom, 85)
-                        .disabled(!showResult || isSaving)
-
-                        Button("Start Recommendation") {
-                            print("Start Recommendation tapped")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(showResult ? Color.green : Color.green.opacity(0.4))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding(.bottom, 85)
-                        .disabled(!showResult)
-                    }
-                    .padding(.horizontal, 20)
+                    bottomButtons
                 }
             }
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#58B361"), Color(hex: "#264D2A")]),
+                    gradient: Gradient(colors: [
+                        Color(hex: "#58B361"),
+                        Color(hex: "#264D2A")
+                    ]),
                     startPoint: .top,
                     endPoint: .bottom
-                ).ignoresSafeArea()
+                )
+                .ignoresSafeArea()
             )
         }
-        // Sheet presentation for result modal
         .sheet(item: $selectedResult) { result in
             BMIResultModal(
                 timestamp: result.timestamp,
@@ -435,18 +338,343 @@ struct BMIView: View {
             .environmentObject(authService)
             .presentationDragIndicator(.visible)
         }
+        .sheet(
+            isPresented: $showRecommendationSheet,
+            onDismiss: {
+                // When the user closes StoryRecommendationView,
+                // also dismiss BMIView → back to HomeView
+                dismiss()
+            }
+        ) {
+            if let predictionResponse {
+                StoryRecommendationView(
+                    response: predictionResponse,
+                    bmi: bmi,
+                    goal: derivedGoal
+                )
+            } else {
+                Text("No recommendations available.")
+                    .padding()
+            }
+        }
+    }
+
+    // MARK: - Subviews (break up for compiler)
+
+    private var headerView: some View {
+        HStack {
+            Text("BMI Calculator")
+                .font(.system(size: 35, weight: .bold))
+                .foregroundColor(.white)
+                .padding(.top, 32)
+            Spacer()
+        }
+        .padding(.horizontal)
+    }
+
+    private var genderUnitRow: some View {
+        HStack(alignment: .top, spacing: 25) {
+            // Gender selector
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Gender")
+                    .font(.headline)
+                    .foregroundColor(.white)
+
+                HStack(spacing: 20) {
+                    ForEach(Gender.allCases) { gender in
+                        Button(action: { selectedGender = gender }) {
+                            VStack(spacing: 8) {
+                                Image(systemName: gender == .male ? "person" : "person.fill")
+                                    .font(.title2)
+                                Text(gender.rawValue)
+                                    .font(.caption)
+                            }
+                            .padding()
+                            .frame(width: 80, height: 80)
+                            .background(
+                                selectedGender == gender
+                                ? Color.green
+                                : Color.gray.opacity(0.4)
+                            )
+                            .cornerRadius(12)
+                            .foregroundColor(.white)
+                        }
+                    }
+                }
+            }
+
+            // Unit System
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Unit System")
+                    .font(.headline)
+                    .foregroundColor(.white)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(UnitSystem.allCases) { unit in
+                        Button(action: { unitSystem = unit }) {
+                            HStack {
+                                Image(
+                                    systemName: unitSystem == unit
+                                    ? "checkmark.circle.fill"
+                                    : "circle"
+                                )
+                                Text(unit.rawValue)
+                            }
+                            .foregroundColor(.white)
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(12)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private var activitySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Activity Level")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.leading, 16)
+
+            Divider().background(Color.white.opacity(0.5))
+
+            Picker("Activity Level", selection: $selectedActivityLevel) {
+                ForEach(ActivityLevel.allCases) { activity in
+                    Text(activity.label).tag(activity)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+        }
+    }
+
+    private var inputsSection: some View {
+        VStack(spacing: 15) {
+            HStack(spacing: 15) {
+                TextField(
+                    "",
+                    text: $age,
+                    prompt: Text("Age").foregroundStyle(.white.opacity(0.8))
+                )
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(10)
+                .keyboardType(.numberPad)
+                .foregroundColor(.white)
+
+                TextField(
+                    "",
+                    text: $weight,
+                    prompt: Text("Weight").foregroundStyle(.white.opacity(0.8))
+                )
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(10)
+                .keyboardType(.decimalPad)
+                .overlay(
+                    Text(unitSystem == .metric ? "kg" : "lb")
+                        .padding(.trailing, 10),
+                    alignment: .trailing
+                )
+                .foregroundColor(.white)
+
+                TextField(
+                    "",
+                    text: $height,
+                    prompt: Text("Height").foregroundStyle(.white.opacity(0.8))
+                )
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(10)
+                .keyboardType(.decimalPad)
+                .overlay(
+                    Text(unitSystem == .metric ? "cm" : "in")
+                        .padding(.trailing, 10),
+                    alignment: .trailing
+                )
+                .foregroundColor(.white)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private var calculateClearButtons: some View {
+        HStack {
+            Button("Calculate BMI") {
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    bmi = calculatedBMI
+                    showResult = true
+                    animateGradient.toggle()
+                    saveError = nil
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                (selectedGender == nil || weight.isEmpty || height.isEmpty || age.isEmpty)
+                ? Color.gray
+                : Color.orange
+            )
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .disabled(
+                selectedGender == nil || weight.isEmpty || height.isEmpty || age.isEmpty
+            )
+
+            Button("Clear") { resetFields() }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.red.opacity(0.4))
+                .foregroundColor(.white)
+                .cornerRadius(10)
+        }
+        .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private var resultSection: some View {
+        if showResult {
+            ZStack {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(
+                                colors: animateGradient
+                                ? gradientColors.reversed()
+                                : gradientColors
+                            ),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(0.4)
+                    .frame(maxWidth: 350, minHeight: 180)
+                    .animation(
+                        .easeInOut(duration: 2)
+                            .repeatForever(autoreverses: true),
+                        value: animateGradient
+                    )
+
+                VStack(spacing: 12) {
+                    Text(String(format: "BMI: %.2f", bmi))
+                        .font(.title)
+                        .bold()
+                        .foregroundColor(categoryColor)
+
+                    Text(category)
+                        .font(.headline)
+                        .foregroundColor(categoryColor)
+
+                    SemiCircleChart(bmi: bmi)
+                        .frame(height: 220)
+                        .padding(.top, 10)
+                }
+                .padding(.bottom, -30)
+            }
+            .transition(.opacity.combined(with: .scale))
+
+            if let saveError {
+                Text(saveError)
+                    .foregroundColor(.red)
+                    .font(.caption)
+                    .padding(.top, 6)
+            }
+        }
+    }
+
+    private var bottomButtons: some View {
+        HStack {
+            // Save to DB and show modal
+            Button(action: {
+                guard showResult else { return }
+                isSaving = true
+                saveError = nil
+
+                Task {
+                    do {
+                        let dbRow = try await bmiService.createBMIResult(
+                            measuredAt: Date(),
+                            weight: Double(weight) ?? 0,
+                            height: Double(height) ?? 0,
+                            unit: unitSystem,
+                            activity: selectedActivityLevel,
+                            gender: selectedGender,
+                            age: Int(age)
+                        )
+
+                        self.selectedResult = BMIResult(
+                            timestamp: dbRow.measuredAt,
+                            bmi: dbRow.bmi,
+                            category: dbRow.category,
+                            gender: selectedGender,
+                            age: age,
+                            activityLevel: selectedActivityLevel,
+                            heightInMeters: dbRow.heightM
+                        )
+                    } catch let postgrestError as PostgrestError {
+                        let message = postgrestError.message
+                        print("PostgREST error: \(message)")
+                        self.saveError = message
+                    } catch {
+                        let msg = error.localizedDescription
+                        print("Generic save BMI error: \(msg)")
+                        self.saveError = "Could not save BMI result. Please try again."
+                    }
+                    isSaving = false
+                }
+            }) {
+                HStack {
+                    if isSaving { ProgressView().tint(.white) }
+                    Text("Show Results")
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(showResult ? Color.blue : Color.blue.opacity(0.4))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .padding(.bottom, 85)
+            .disabled(!showResult || isSaving)
+
+            // Start Recommendation
+            Button(action: {
+                Task { await startRecommendation() }
+            }) {
+                HStack {
+                    if isLoadingRecommendation {
+                        ProgressView().tint(.white)
+                    }
+                    Text("Start Recommendation")
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(showResult ? Color.green : Color.green.opacity(0.4))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .padding(.bottom, 85)
+            .disabled(!showResult || isLoadingRecommendation)
+        }
+        .padding(.horizontal, 20)
     }
 }
 
 // MARK: - Supporting Views
+
 struct SemiCircleChart: View {
     let bmi: Double
     @State private var progress: Double = 0
+
     var needleAngle: Angle {
         let clampedBMI = min(max(bmi, 10), 40)
         let percentage = (clampedBMI - 10) / 30
         return .degrees(percentage * 180)
     }
+
     var body: some View {
         ZStack {
             Circle()
@@ -456,10 +684,13 @@ struct SemiCircleChart: View {
 
             Circle()
                 .trim(from: 0.0, to: min(CGFloat(progress / 40), 0.5))
-                .stroke(AngularGradient(
-                    gradient: Gradient(colors: [.blue, .green, .orange, .red]),
-                    center: .center
-                ), style: StrokeStyle(lineWidth: 30, lineCap: .round))
+                .stroke(
+                    AngularGradient(
+                        gradient: Gradient(colors: [.blue, .green, .orange, .red]),
+                        center: .center
+                    ),
+                    style: StrokeStyle(lineWidth: 30, lineCap: .round)
+                )
                 .rotationEffect(.degrees(180))
                 .animation(.easeOut(duration: 1.0), value: progress)
 
@@ -483,6 +714,7 @@ struct SemiCircleChart: View {
 
 struct NeedleIndicator: Shape {
     var angle: Angle
+
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let radius = min(rect.width, rect.height) / 2
@@ -491,11 +723,12 @@ struct NeedleIndicator: Shape {
         let endY = center.y + radius * sin(CGFloat(angle.radians - .pi))
         path.move(to: center)
         path.addLine(to: CGPoint(x: endX, y: endY))
-        return path;
+        return path
     }
 }
 
-// MARK: - BMI Result Modal (from your existing code)
+// MARK: - BMI Result Modal (unchanged)
+
 struct BMIResultModal: View {
     @EnvironmentObject var authService: SupabaseAuthService
 
@@ -610,7 +843,6 @@ struct BMIResultModal: View {
         }
     }
 }
-
 
 #Preview {
     BMIView().environmentObject(SupabaseAuthService())
