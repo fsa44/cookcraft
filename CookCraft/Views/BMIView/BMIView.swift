@@ -146,7 +146,7 @@ struct BMIView: View {
 
     var categoryColor: Color {
         switch category {
-        case "Underweight": return .blue
+        case "Underweight": return .red
         case "Normal": return .green
         case "Overweight": return .orange
         case "Obese": return .red
@@ -156,7 +156,7 @@ struct BMIView: View {
 
     var gradientColors: [Color] {
         switch category {
-        case "Underweight": return [Color.blue, Color.cyan]
+        case "Underweight": return [Color.red, Color.red]
         case "Normal": return [Color.green, Color.teal]
         case "Overweight": return [Color.orange, Color.yellow]
         case "Obese": return [Color.red, Color.pink]

@@ -1,5 +1,3 @@
-//
-
 
 import SwiftUI
 
@@ -7,13 +5,13 @@ struct HomeView: View {
     @EnvironmentObject var authService: SupabaseAuthService
     private let recipeService = RecipeService()
 
+
     // MARK: – State
     @State private var allRecipes: [Recipe] = []
     @State private var filteredRecipes: [Recipe] = []
     @State private var selectedCategoryRecipes: [Recipe] = []
     @State private var showRecipeGroupModal: Bool = false
     @State private var searchDebounceTimer: Timer? = nil
-
 
     @State private var searchText = ""
     @State private var isLoading = false
@@ -31,11 +29,11 @@ struct HomeView: View {
         ("Snack Recipes", "Snack Image 2", "recipes_snack_part0.json"),
     ]
 
-    private let articles = [
-        ("Zinc Sources", "lightbulb.fill"),
-        ("Vitamin A Sources", "cross.case.fill"),
-        ("Healthy Eating Tips", "app.badge.checkmark")
-    ]
+    // ✅ New Nutrition Articles section (using separate view)
+    private var articleSection: some View {
+        NutritionArticlesSection()
+            .offset(y: -30) // check
+    }
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -47,7 +45,6 @@ struct HomeView: View {
     }
 
     // MARK: – Normalization for Swahili-friendly matching
-    // MARK: – Normalization for Swahili-friendly matching
     private func normalize(_ s: String) -> String {
         s.folding(options: [.diacriticInsensitive, .widthInsensitive, .caseInsensitive],
                   locale: Locale(identifier: "sw_KE"))
@@ -55,7 +52,7 @@ struct HomeView: View {
          .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    // MARK: – Filtering (text + diet) — no aliases dependency
+    // MARK: – Filtering (text + diet)
     private func filterRecipes(_ recipes: [Recipe], query: String, dietaryFilter: String) -> [Recipe] {
         let nq = normalize(query)
         return recipes.filter { recipe in
@@ -69,8 +66,7 @@ struct HomeView: View {
         }
     }
 
-
-    // MARK: – Category loader (unchanged)
+    // MARK: – Category loader
     private func loadCategory(title: String, jsonFile: String) {
         isLoading = true
         errorMessage = ""
@@ -94,7 +90,6 @@ struct HomeView: View {
         isLoading = true
         errorMessage = ""
 
-        // Lazy-load the full catalog once, then filter
         if allRecipes.isEmpty {
             recipeService.fetchAllRecipes { recipes in
                 self.allRecipes = recipes
@@ -114,11 +109,12 @@ struct HomeView: View {
             self.selectedCategoryRecipes = []
             self.showRecipeGroupModal = false
         } else {
-            // Reuse the same modal used for categories
             self.selectedCategoryRecipes = Array(results.prefix(16))
             self.showRecipeGroupModal = true
         }
     }
+
+    // MARK: – Body
 
     var body: some View {
         NavigationView {
@@ -142,11 +138,13 @@ struct HomeView: View {
                     CategoriesWidget(categories: categoriesWithFiles) { title, fileName in
                         loadCategory(title: title, jsonFile: fileName)
                     }
-                    .offset(y: -5)
+                    .offset(y: -20) //check
 
+                    // ✅ Uses the new dynamic Articles section
                     articleSection
                 }
                 .padding()
+//                .offset(y:-45)
             }
             .background(
                 LinearGradient(
@@ -162,30 +160,24 @@ struct HomeView: View {
         }
         .navigationBarHidden(true)
         .onAppear(perform: fetchUserName)
-        // Re-filter when the diet changes (if there’s an active query)
         .onChange(of: selectedDietaryFilter) { _,_ in
             if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 fetchMealIdeas(query: searchText)
             }
         }
-        // Live (instant) search as they type: comment out if you prefer submit-only
         .onChange(of: searchText) { _, newValue in
             let query = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            // Invalidate any previous typing timer
             searchDebounceTimer?.invalidate()
 
             if query.isEmpty {
-                // Clear UI when text is cleared
                 self.errorMessage = ""
                 self.showRecipeGroupModal = false
                 self.selectedCategoryRecipes = []
                 return
             }
 
-            // Start a new timer (e.g., 0.6s after last key press)
             searchDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false) { _ in
-                // Ensure catalog loaded
                 if allRecipes.isEmpty {
                     recipeService.fetchAllRecipes { recipes in
                         self.allRecipes = recipes
@@ -196,7 +188,6 @@ struct HomeView: View {
                 }
             }
         }
-
     }
 
     // MARK: – UI
@@ -219,12 +210,13 @@ struct HomeView: View {
             Text(userInitials)
                 .font(.system(size: 28, weight: .semibold))
                 .foregroundColor(.white)
-                .frame(width: 58, height: 58)
+                .frame(width: 52, height: 52)
                 .background(Color.white.opacity(0.25))
                 .clipShape(Circle())
         }
         .padding(.horizontal)
         .padding(.trailing, -10)
+        .offset(y:-10) //check
     }
 
     private var searchBar: some View {
@@ -233,16 +225,17 @@ struct HomeView: View {
                 .foregroundColor(.gray)
             TextField("Search for meal ideas...", text: $searchText)
                 .foregroundColor(.black)
-                .autocorrectionDisabled(true)               // no autocorrect (good for Swahili terms)
-                .textInputAutocapitalization(.never)        // keep user’s casing as typed
+                .autocorrectionDisabled(true)
+                .textInputAutocapitalization(.never)
                 .keyboardType(.default)
                 .submitLabel(.search)
-                .onSubmit { fetchMealIdeas(query: searchText) } // ← submit triggers search
+                .onSubmit { fetchMealIdeas(query: searchText) }
         }
         .padding(.horizontal)
         .frame(height: 45)
         .background(Color.white.opacity(0.8))
         .cornerRadius(15)
+        .offset(y: -16) //check
     }
 
     private var filterPicker: some View {
@@ -255,60 +248,7 @@ struct HomeView: View {
         .padding(.horizontal)
         .background(Color.white.opacity(0.8))
         .cornerRadius(15)
-    }
-
-    private var articleSection: some View {
-        VStack(alignment: .leading) {
-            Text("Educational Articles")
-                .font(.headline)
-                .foregroundColor(.white)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 15) {
-                    ForEach(articles, id: \.0) { article, icon in
-                        articleCard(title: article, icon: icon)
-                    }
-                }
-                .padding(.horizontal)
-            }
-        }
-        .offset(y: -10)
-    }
-
-    private func articleCard(title: String, icon: String) -> some View {
-        VStack {
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 200, height: 210)
-
-                VStack {
-                    ZStack {
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color.green, Color.yellow]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .clipShape(Circle())
-                        .frame(width: 50, height: 50)
-
-                        Image(systemName: icon)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(.white)
-                    }
-
-                    Text(title)
-                        .font(.title3)
-                        .bold()
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-            }
-            .shadow(radius: 10)
-        }
+        .offset(y: -20) //check
     }
 
     private func fetchUserName() {

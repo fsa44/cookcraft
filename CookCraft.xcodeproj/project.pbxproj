@@ -43,6 +43,7 @@
 		67240AD42EA45CF80003CB62 /* Exceptions for "CookCraft" folder in "CookCraft" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				CustomTabView/Untitled.swift,
 				Info.plist,
 			);
 			target = 67240A812EA453440003CB62 /* CookCraft */;
